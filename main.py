@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from ui import Ui_Logfilter
+from functools import partial
 import os
 
 class MainWindow(QMainWindow, Ui_Logfilter):
@@ -57,15 +58,17 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.menuRecent_Directories.clear()
         for directory in self.recent_directories:
             action = QtWidgets.QAction(directory, self)
-            action.triggered.connect(lambda checked, dir=directory: self.set_directory(dir))
+            action.triggered.connect(partial(self.set_directory, directory))
             self.menuRecent_Directories.addAction(action)
+
+    def update_combo_box(self):
+        # Clear the combo box and re-add directories
+        self.comboBox.clear()
+        for directory in self.recent_directories:
+            self.comboBox.addItem(directory)
 
     def set_directory(self, directory):
         self.current_directory = directory
-
-        # Add to comboBox if not already there
-        if directory not in [self.comboBox.itemText(i) for i in range(self.comboBox.count())]:
-            self.comboBox.addItem(directory)
 
         # Update recent directories list
         if directory in self.recent_directories:
@@ -77,8 +80,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Save to external file
         self.save_recent_directories()
 
-        # Update the menu
+        # Update the menu and combo box
         self.update_recent_directories_menu()
+        self.update_combo_box()
 
         # Update the status bar
         self.statusBar().showMessage(self.current_directory)
@@ -87,10 +91,6 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", self.current_directory)
         if directory:
             self.current_directory = directory
-
-            # Add to comboBox if not already there
-            if directory not in [self.comboBox.itemText(i) for i in range(self.comboBox.count())]:
-                self.comboBox.addItem(directory)
 
             # Update recent directories list
             if directory in self.recent_directories:
@@ -102,8 +102,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             # Save to external file
             self.save_recent_directories()
 
-            # Update the menu
+            # Update the menu and combo box
             self.update_recent_directories_menu()
+            self.update_combo_box()
 
             # Update the status bar
             self.statusBar().showMessage(self.current_directory)
