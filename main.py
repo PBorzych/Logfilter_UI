@@ -1,9 +1,13 @@
+# Version 1.0
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from ui import Ui_Logfilter
 from functools import partial
 import os
+
+version = "1.0.0"
 
 class MainWindow(QMainWindow, Ui_Logfilter):
 
@@ -21,11 +25,10 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.current_directory = os.path.expanduser("~")  # Set to user's home directory
 
         # Clear and populate the comboBox with all recent directories
-        self.comboBox.clear()
-        self.comboBox.addItems(self.recent_directories)
+        self.update_combo_box()
 
-        # Optionally display the current directory in the status bar
-        self.statusBar().showMessage(self.current_directory)
+        # Update the window title
+        self.update_window_title()
 
         # Update the Recent Directories menu
         self.update_recent_directories_menu()
@@ -40,6 +43,18 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.actionLocal_Check.triggered.connect(self.local_check)
         self.actionSharepoint_Check_N_A.triggered.connect(self.sharepoint_check)
         self.actionabout.triggered.connect(self.about)
+
+        # Connect the comboBox currentIndexChanged signal to the method
+        self.comboBox.currentIndexChanged.connect(self.combo_box_selection_changed)
+
+    def combo_box_selection_changed(self, index):
+        if index >= 0:
+            directory = self.comboBox.itemText(index)
+            if directory:
+                self.set_directory(directory)
+
+    def update_window_title(self):
+        self.setWindowTitle(f"Logfilter {version} - {self.current_directory}")    
 
     def load_recent_directories(self):
         try:
@@ -62,10 +77,16 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.menuRecent_Directories.addAction(action)
 
     def update_combo_box(self):
-        # Clear the combo box and re-add directories
+        # Block signals to prevent triggering currentIndexChanged
+        self.comboBox.blockSignals(True)
         self.comboBox.clear()
         for directory in self.recent_directories:
             self.comboBox.addItem(directory)
+        # Set the current index to match current_directory
+        index = self.recent_directories.index(self.current_directory)
+        self.comboBox.setCurrentIndex(index)
+        # Unblock signals after updating
+        self.comboBox.blockSignals(False)
 
     def set_directory(self, directory):
         self.current_directory = directory
@@ -84,8 +105,8 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.update_recent_directories_menu()
         self.update_combo_box()
 
-        # Update the status bar
-        self.statusBar().showMessage(self.current_directory)
+        # Update the window title
+        self.update_window_title()
 
     def browse_directory(self):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", self.current_directory)
@@ -106,8 +127,8 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.update_recent_directories_menu()
             self.update_combo_box()
 
-            # Update the status bar
-            self.statusBar().showMessage(self.current_directory)
+            # Update the window title
+            self.update_window_title()
     
     def start_monitoring(self):
         pass
