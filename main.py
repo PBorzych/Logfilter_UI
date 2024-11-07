@@ -2,6 +2,7 @@
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from ui import Ui_Logfilter
 from functools import partial
@@ -55,6 +56,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
+
+        # Set the window icon
+        self.setWindowIcon(QIcon('logo.webp'))
 
         # Load recent directories from external file
         self.recent_directories = self.load_recent_directories()
