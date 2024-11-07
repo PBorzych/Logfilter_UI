@@ -2,7 +2,7 @@
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from ui import Ui_Logfilter
 from functools import partial
 import os
@@ -146,7 +146,12 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         pass
 
     def about(self):
-        pass
+        QMessageBox.about(
+        self,
+        "About Logfilter",
+        f"<b>Logfilter</b><br>Version {version}<br><br>"
+        "This application is designed to filter logs from Silver Scan-Tool and perform live monitoring."
+        )
 
     def close_application(self):
         self.close()
