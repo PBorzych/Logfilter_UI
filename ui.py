@@ -181,11 +181,11 @@ class Ui_Logfilter(object):
         self.actionabout.setText(_translate("Logfilter", "About"))
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Logfilter = QtWidgets.QMainWindow()
-    ui = Ui_Logfilter()
-    ui.setupUi(Logfilter)
-    Logfilter.show()
-    sys.exit(app.exec_())
+# if __name__ == "__main__":
+#     import sys
+#     app = QtWidgets.QApplication(sys.argv)
+#     Logfilter = QtWidgets.QMainWindow()
+#     ui = Ui_Logfilter()
+#     ui.setupUi(Logfilter)
+#     Logfilter.show()
+#     sys.exit(app.exec_())
