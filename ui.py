@@ -25,30 +25,30 @@ class Ui_Logfilter(object):
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
 
-        # Create a push button for browsing 
+        # Create a push button for browsing
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
         self.gridLayout.addWidget(self.pushButton, 0, 0, 1, 1)
 
-        # Create a vertical layout for directory address and label
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        # Remove the verticalLayout_2 and its references since we're not using it
+        # and to prevent the AttributeError.
 
-        # Create a label for directory
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.label.setFont(font)
-        self.label.setObjectName("label")
-        self.verticalLayout_2.addWidget(self.label)
+        # Create label_2 to display the selected directory
+        # self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        # font = QtGui.QFont()
+        # font.setPointSize(12)
+        # self.label_2.setFont(font)
+        # self.label_2.setObjectName("label_2")
+        # # Add label_2 directly to the grid layout at position (1, 0, 1, 2)
+        # self.gridLayout.addWidget(self.label_2, 1, 0, 1, 2)
 
-        # Create a text field for directory address
-        self.Directory_adress = QtWidgets.QLineEdit(self.centralwidget)
-        self.Directory_adress.setObjectName("Directory_adress")
-        self.verticalLayout_2.addWidget(self.Directory_adress)
-
-        # Add the vertical layout to the grid layout
-        self.gridLayout.addLayout(self.verticalLayout_2, 1, 0, 1, 2)
+        # Create a vertical layout for the comboBox
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox.setObjectName("comboBox")
+        self.verticalLayout_3.addWidget(self.comboBox)
+        self.gridLayout.addLayout(self.verticalLayout_3, 2, 0, 1, 2)
 
         # Create another vertical layout for more interactive components.
         self.verticalLayout = QtWidgets.QVBoxLayout()
@@ -77,12 +77,15 @@ class Ui_Logfilter(object):
         self.radioButton_.setObjectName("radioButton_")
         self.verticalLayout.addWidget(self.radioButton_)
         self.gridLayout.addLayout(self.verticalLayout, 3, 0, 1, 2)
+
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_2.setObjectName("pushButton_2")
         self.gridLayout.addWidget(self.pushButton_2, 4, 0, 1, 1)
+
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setObjectName("pushButton_3")
         self.gridLayout.addWidget(self.pushButton_3, 4, 1, 1, 1)
+
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
@@ -102,18 +105,7 @@ class Ui_Logfilter(object):
         self.label_5.setObjectName("label_5")
         self.verticalLayout_4.addWidget(self.label_5)
         self.gridLayout.addLayout(self.verticalLayout_4, 5, 0, 1, 2)
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
-        self.verticalLayout_3.addWidget(self.label_2)
-        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBox.setObjectName("comboBox")
-        self.verticalLayout_3.addWidget(self.comboBox)
-        self.gridLayout.addLayout(self.verticalLayout_3, 2, 0, 1, 2)
+
         Logfilter.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(Logfilter)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 585, 22))
@@ -160,15 +152,14 @@ class Ui_Logfilter(object):
         _translate = QtCore.QCoreApplication.translate
         Logfilter.setWindowTitle(_translate("Logfilter", "MainWindow"))
         self.pushButton.setText(_translate("Logfilter", "Browse"))
-        self.label.setText(_translate("Logfilter", "Directory: "))
+        #self.label_2.setText(_translate("Logfilter", "Select Directory"))  
         self.label_3.setText(_translate("Logfilter", "Mode"))
         self.radioButton_real_time.setText(_translate("Logfilter", "Real-time Monitoring"))
         self.radioButton_.setText(_translate("Logfilter", "Full Folder Error Check"))
         self.pushButton_2.setText(_translate("Logfilter", "Start"))
         self.pushButton_3.setText(_translate("Logfilter", "Stop"))
         self.label_4.setText(_translate("Logfilter", " Results / Log"))
-        self.label_5.setText(_translate("Logfilter", "Statsus:"))
-        self.label_2.setText(_translate("Logfilter", "Last used:"))
+        self.label_5.setText(_translate("Logfilter", "Status:"))
         self.menuFile.setTitle(_translate("Logfilter", "File"))
         self.menuSettings.setTitle(_translate("Logfilter", "Settings"))
         self.menuHelp.setTitle(_translate("Logfilter", "Help"))
