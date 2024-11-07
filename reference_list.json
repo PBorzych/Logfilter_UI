@@ -1,0 +1,25 @@
+{
+  "keywords": [
+    "fail",
+    "no response",
+    "error"
+  ],
+  "CH/US MP/HP version": [
+    "D2  SGCM-Start/GenCtrl",
+    "30  CHCM-ChassisCtrl",
+    "D5  BECM-B+EnergyCtrl",
+    "10  ECM-EngineControl",
+    "18  TCM-TransmisCtrl",
+    "2A  BSCM-BrakeSystem"
+  ],
+  "CH/US PHEV version": [
+    "CA  BCCM-B+ChargerCtrl",
+    "10  ECM-EngineControl",
+    "30  CHCM-ChassisCtrl",
+    "CB  BECM-B+EnergyCtrl",
+    "18  TCM-TransmisCtrl",
+    "2A  BSCM-BrakeSystem",
+    "11  DMCM-DriveMotorCtrl",
+    "14  SGCM-Start/GenCtrl"
+  ]
+}

@@ -1,13 +1,54 @@
 # Version 1.0
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from ui import Ui_Logfilter
 from functools import partial
 import os
+import time
+from pathlib import Path
+
+from file_processing import read_file_contents, find_new_txt_files
+from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
+from real_time_monitoring import process_file
 
 version = "1.0.0"
+
+# Load keywords globally
+json_file_path = os.path.abspath('reference_list.json')
+keywords = load_keywords_from_json(json_file_path)
+
+class MonitoringThread(QThread):
+    output_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal()
+
+    def __init__(self, directory, json_file_path):
+        super().__init__()
+        self.directory = directory
+        self.json_file_path = json_file_path
+        self._is_running = True
+
+    def run(self):
+        processed_files = set()
+
+        # Populate initial set of processed files to avoid re-processing
+        directory = Path(self.directory)
+        for file in directory.glob('*.txt'):
+            processed_files.add(file.name)
+
+        # Continuous monitoring loop
+        while self._is_running:
+            new_files = find_new_txt_files(self.directory, processed_files)
+            for file in new_files:
+                output = process_file(file, self.json_file_path)
+                self.output_signal.emit(output)
+                processed_files.add(file.name)
+            time.sleep(5)
+        self.finished_signal.emit()
+
+    def stop(self):
+        self._is_running = False
 
 class MainWindow(QMainWindow, Ui_Logfilter):
 
@@ -46,6 +87,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         # Connect the comboBox currentIndexChanged signal to the method
         self.comboBox.currentIndexChanged.connect(self.combo_box_selection_changed)
+
+        # Disable Stop button initially
+        self.pushButton_3.setEnabled(False)
 
     def combo_box_selection_changed(self, index):
         if index >= 0:
@@ -131,10 +175,38 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.update_window_title()
     
     def start_monitoring(self):
-        pass
+        if not hasattr(self, 'current_directory') or not self.current_directory:
+            QMessageBox.warning(self, "Warning", "Please select a directory before starting monitoring.")
+            return
+
+        if self.radioButton_real_time.isChecked():
+            # Start real-time monitoring
+            self.monitoring_thread = MonitoringThread(self.current_directory, json_file_path)
+            self.monitoring_thread.output_signal.connect(self.update_output)
+            self.monitoring_thread.finished_signal.connect(self.monitoring_finished)
+            self.monitoring_thread.start()
+            self.pushButton_2.setEnabled(False)
+            self.pushButton_3.setEnabled(True)
+        elif self.radioButton_.isChecked():
+            # Implement full folder error check if applicable
+            pass
+        else:
+            QMessageBox.warning(self, "Warning", "Please select a mode before starting.")
 
     def stop_monitoring(self):
-        pass
+        if hasattr(self, 'monitoring_thread') and self.monitoring_thread.isRunning():
+            self.monitoring_thread.stop()
+            self.monitoring_thread.wait()
+        self.pushButton_2.setEnabled(True)
+        self.pushButton_3.setEnabled(False)
+
+    def update_output(self, text):
+        self.textBrowser.append(text)
+
+    def monitoring_finished(self):
+        QMessageBox.information(self, "Info", "Monitoring has finished.")
+        self.pushButton_2.setEnabled(True)
+        self.pushButton_3.setEnabled(False)
 
     def save_log(self):
         pass
