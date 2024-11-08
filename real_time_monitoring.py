@@ -194,4 +194,4 @@ def continuous_file_check(logfile_directory, json_file_path):
             processed_files.add(file.name)
 
         # Configurable delay to avoid excessive frequency of directory checks
-        time.sleep(5)
+        time.sleep(3)

@@ -22,22 +22,10 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0" colspan="2">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item row="2" column="0" colspan="2">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QLabel" name="label">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Directory: </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="Directory_adress"/>
+       <widget class="QComboBox" name="comboBox"/>
       </item>
      </layout>
     </item>
@@ -115,35 +103,32 @@
        <widget class="QTextBrowser" name="textBrowser"/>
       </item>
       <item>
-       <widget class="QLabel" name="label_5">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Statsus:</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Last used:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="comboBox"/>
+       <layout class="QHBoxLayout" name="horizontalLayout_status">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Status:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_status_value">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Not started</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -164,7 +149,7 @@
     </property>
     <addaction name="actionOpen_Directory"/>
     <addaction name="actionSave_Log"/>
-    <addaction name="actionRecent_Directories"/>
+    <addaction name="menuRecent_Directories"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
@@ -195,7 +180,7 @@
     <string>Save Log</string>
    </property>
   </action>
-  <action name="actionRecent_Directories">
+  <action name="menuRecent_Directories">
    <property name="text">
     <string>Recent Directories</string>
    </property>

@@ -30,18 +30,6 @@ class Ui_Logfilter(object):
         self.pushButton.setObjectName("pushButton")
         self.gridLayout.addWidget(self.pushButton, 0, 0, 1, 1)
 
-        # Remove the verticalLayout_2 and its references since we're not using it
-        # and to prevent the AttributeError.
-
-        # Create label_2 to display the selected directory
-        # self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        # font = QtGui.QFont()
-        # font.setPointSize(12)
-        # self.label_2.setFont(font)
-        # self.label_2.setObjectName("label_2")
-        # # Add label_2 directly to the grid layout at position (1, 0, 1, 2)
-        # self.gridLayout.addWidget(self.label_2, 1, 0, 1, 2)
-
         # Create a vertical layout for the comboBox
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -98,12 +86,31 @@ class Ui_Logfilter(object):
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
         self.textBrowser.setObjectName("textBrowser")
         self.verticalLayout_4.addWidget(self.textBrowser)
+        
+        # Create horizontal layout for status labels
+        self.horizontalLayout_status = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_status.setObjectName("horizontalLayout_status")
+
+        # Static label for the status
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(12)
         self.label_5.setFont(font)
         self.label_5.setObjectName("label_5")
-        self.verticalLayout_4.addWidget(self.label_5)
+        self.horizontalLayout_status.addWidget(self.label_5)
+
+        # Dynamic label to display the status
+        self.label_status_value = QtWidgets.QLabel(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.label_status_value.setFont(font)
+        self.label_status_value.setObjectName("label_status_value")
+        self.horizontalLayout_status.addWidget(self.label_status_value)
+
+        # Add the horizontal layout to the verticalLayout_4
+        self.verticalLayout_4.addLayout(self.horizontalLayout_status)
+
+        # Add the vertical layout to the grid layout
         self.gridLayout.addLayout(self.verticalLayout_4, 5, 0, 1, 2)
 
         Logfilter.setCentralWidget(self.centralwidget)
@@ -160,6 +167,7 @@ class Ui_Logfilter(object):
         self.pushButton_3.setText(_translate("Logfilter", "Stop"))
         self.label_4.setText(_translate("Logfilter", " Results / Log"))
         self.label_5.setText(_translate("Logfilter", "Status:"))
+        self.label_status_value.setText(_translate("Logfilter", "Not started"))
         self.menuFile.setTitle(_translate("Logfilter", "File"))
         self.menuSettings.setTitle(_translate("Logfilter", "Settings"))
         self.menuHelp.setTitle(_translate("Logfilter", "Help"))

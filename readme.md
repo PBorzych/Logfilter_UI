@@ -1,4 +1,7 @@
 TODO:
-    1) Browse function and recent function          DONE
-    2) Save log file function 
-    3) Status info, "ready for live monitoring", "finished reading whole path" etc. 
+    / Browse function and recent function          
+    o Save log file function 
+    o Status info, "ready for live monitoring", "finished reading whole path" etc. 
+    o Folder check
+    / Live monitoring
+    o Add/Remove Keywords in the program                  
