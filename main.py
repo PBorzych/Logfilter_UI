@@ -213,6 +213,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.pushButton_2.setEnabled(False)
             self.pushButton_3.setEnabled(True)
             self.label_status_value.setText("Monitoring...")
+            self.label_status_value.setStyleSheet("color: green;")
         elif self.radioButton_.isChecked():
             # Start full folder error check
             self.full_folder_thread = FullFolderCheckThread(self.current_directory, json_file_path)
@@ -222,6 +223,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.pushButton_2.setEnabled(False)
             self.pushButton_3.setEnabled(True)
             self.label_status_value.setText("Processing...")
+            self.label_status_value.setStyleSheet("color: green;")
         else:
             QMessageBox.warning(self, "Warning", "Please select a mode before starting.")
 
@@ -235,6 +237,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.pushButton_2.setEnabled(True)
         self.pushButton_3.setEnabled(False)
         self.label_status_value.setText("Stopped")
+        self.label_status_value.setStyleSheet("color: red;")
 
     def update_output(self, text):
         self.textBrowser.append(text)
@@ -248,11 +251,14 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.pushButton_2.setEnabled(True)
         self.pushButton_3.setEnabled(False)
         self.label_status_value.setText("Completed")
+        self.label_status_value.setStyleSheet("color: blue;")
 
     def monitoring_finished(self):
         QMessageBox.information(self, "Info", "Monitoring has finished.")
         self.pushButton_2.setEnabled(True)
         self.pushButton_3.setEnabled(False)
+        self.label_status_value.setText("Completed")
+        self.label_status_value.setStyleSheet("color: blue;")
 
     def save_log(self):
         pass
