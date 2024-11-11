@@ -1,18 +1,19 @@
 # Version 1.0
 
+import os
+import time
+
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from ui import Ui_Logfilter
 from functools import partial
-import os
-import time
 from pathlib import Path
-
 from file_processing import read_file_contents, find_new_txt_files
 from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
 from real_time_monitoring import process_file
+from check_errors_in_folder import check_errors_in_folder, check_file_pairs_and_duplicates
 
 version = "1.0.0"
 
@@ -46,6 +47,26 @@ class MonitoringThread(QThread):
                 self.output_signal.emit(output)
                 processed_files.add(file.name)
             time.sleep(5)
+        self.finished_signal.emit()
+
+    def stop(self):
+        self._is_running = False
+
+class FullFolderCheckThread(QThread):
+    output_signal = pyqtSignal(str)
+    finished_signal = pyqtSignal()
+
+    def __init__(self, directory, json_file_path):
+        super().__init__()
+        self.directory = directory
+        self.json_file_path = json_file_path
+        self._is_running = True
+
+    def run(self):
+        if self._is_running:
+            # Pass the is_running function to check_errors_in_folder
+            output = check_errors_in_folder(self.directory, self.json_file_path, is_running=lambda: self._is_running)
+            self.output_signal.emit(output)
         self.finished_signal.emit()
 
     def stop(self):
@@ -191,9 +212,16 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.monitoring_thread.start()
             self.pushButton_2.setEnabled(False)
             self.pushButton_3.setEnabled(True)
+            self.label_status_value.setText("Monitoring...")
         elif self.radioButton_.isChecked():
-            # Implement full folder error check if applicable
-            pass
+            # Start full folder error check
+            self.full_folder_thread = FullFolderCheckThread(self.current_directory, json_file_path)
+            self.full_folder_thread.output_signal.connect(self.update_full_folder_output)
+            self.full_folder_thread.finished_signal.connect(self.full_folder_finished)
+            self.full_folder_thread.start()
+            self.pushButton_2.setEnabled(False)
+            self.pushButton_3.setEnabled(True)
+            self.label_status_value.setText("Processing...")
         else:
             QMessageBox.warning(self, "Warning", "Please select a mode before starting.")
 
@@ -201,11 +229,25 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         if hasattr(self, 'monitoring_thread') and self.monitoring_thread.isRunning():
             self.monitoring_thread.stop()
             self.monitoring_thread.wait()
+        if hasattr(self, 'full_folder_thread') and self.full_folder_thread.isRunning():
+            self.full_folder_thread.stop()
+            self.full_folder_thread.wait()
         self.pushButton_2.setEnabled(True)
         self.pushButton_3.setEnabled(False)
+        self.label_status_value.setText("Stopped")
 
     def update_output(self, text):
         self.textBrowser.append(text)
+    
+    def update_full_folder_output(self, text):
+        self.textBrowser.clear()
+        self.textBrowser.setHtml(text)
+    
+    def full_folder_finished(self):
+        QMessageBox.information(self, "Info", "Full folder error check has finished.")
+        self.pushButton_2.setEnabled(True)
+        self.pushButton_3.setEnabled(False)
+        self.label_status_value.setText("Completed")
 
     def monitoring_finished(self):
         QMessageBox.information(self, "Info", "Monitoring has finished.")

@@ -7,6 +7,7 @@ def check_file_pairs_and_duplicates(directory):
     file_names = set()
     duplicates = []
     missing_pairs = []
+    output = ""
 
     for file_path in directory.glob('*.txt'):
         file_name = file_path.stem
@@ -30,39 +31,60 @@ def check_file_pairs_and_duplicates(directory):
         if len(files) == 1:
             missing_pairs.append(files[0])
 
-    return file_pairs, duplicates, missing_pairs
+    # Handle duplicates
+    if duplicates:
+        output += f"\nDuplicate files found:\n"
+        for duplicate in duplicates:
+            output += f" - {duplicate}\n"
 
-def check_errors_in_folder(folder_path, json_file_path):
+    # Handle missing pairs
+    if missing_pairs:
+        output += f"\n<span style='color:red; font-weight:bold;'>Files with missing pairs:</span>\n"
+        for missing_pair in missing_pairs:
+            output += f" - {missing_pair}\n"
+
+    return file_pairs, duplicates, missing_pairs, output
+
+def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True):
     """
     Scans through all files in the given folder, processes each file, and checks for errors.
     Summarizes which files have errors based on specified keywords. Additionally, checks for duplicate files
     and ensures there is a corresponding "pending" logfile for every "confirmed" logfile and vice versa.
     """
+
+    print(f"folder_path: {folder_path}, type: {type(folder_path)}")
+    directory = Path(folder_path)
+    print(f"directory: {directory}, type: {type(directory)}")
+
     # Load ECU reference data and error keywords
     keywords = load_keywords_from_json(json_file_path)
     flattened_reference = load_ecu_reference(json_file_path)
 
     # Store errors found for final summary
-    error_summary = {}
+    output = ""
 
     # Get file pairs, duplicates, and missing pairs
     directory = Path(folder_path)
-    file_pairs, duplicates, missing_pairs = check_file_pairs_and_duplicates(directory)
+    file_pairs, duplicates, missing_pairs, pairs_output = check_file_pairs_and_duplicates(directory)
+    output += pairs_output
 
     # Handle duplicates
     if duplicates:
-        print(f"\nDuplicate files found:")
+        output += f"\nDuplicate files found:\n"
         for duplicate in duplicates:
-            print(f" - {duplicate}")
+            output += f" - {duplicate}\n"
 
     # Handle missing pairs
     if missing_pairs:
-        print(f"\n\033[1;31;40m Files with missing pairs: \033[0m")
+        output += f"\n<span style='color:red; font-weight:bold;'>Files with missing pairs:</span>\n"
         for missing_pair in missing_pairs:
-            print(f" - {missing_pair}")
+            output += f" - {missing_pair}\n"
 
     # Iterate over all text files in the folder
+    error_summary = {}
     for file_path in directory.glob('*.txt'):
+        if not is_running():
+            return output + "\nProcess was stopped by the user."
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
 
@@ -76,15 +98,17 @@ def check_errors_in_folder(folder_path, json_file_path):
         if warning or fail_details:
             error_summary[file_path.name] = {"warning": warning, "fail_details": fail_details}
 
-    # Print summary of errors across all files
+    # Build summary of errors across all files
     if error_summary:
-        print("\n\033[1;32;40m Summary of Errors:   \033[0m")
+        output += "\n<span style='color:green; font-weight:bold;'>Summary of Errors:</span>\n"
         for file_name, errors in error_summary.items():
-            print(f"\n\033[1;37;40m{file_name}:  \033[0m")
+            output += f"\n<span style='font-weight:bold;'>{file_name}:</span>\n"
             if errors["warning"]:
-                print(f" {errors['warning']}")
+                output += f" {errors['warning']}\n"
             if errors["fail_details"]:
                 for detail in errors["fail_details"]:
-                    print(f"  - {detail}")
+                    output += f"  - {detail}\n"
     else:
-        print("\nNo errors found across all files.")
+        output += "\nNo errors found across all files.\n"
+
+    return output
