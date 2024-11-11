@@ -106,7 +106,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.actionOpen_Directory.triggered.connect(self.browse_directory)
         self.actionExit.triggered.connect(self.close_application)
         self.actionSave_Log.triggered.connect(self.save_log)
-        self.actionLocal_Check.triggered.connect(self.local_check)
+        #self.actionLocal_Check.triggered.connect(self.local_check)
         self.actionSharepoint_Check_N_A.triggered.connect(self.sharepoint_check)
         self.actionabout.triggered.connect(self.about)
 
@@ -263,8 +263,8 @@ class MainWindow(QMainWindow, Ui_Logfilter):
     def save_log(self):
         pass
 
-    def local_check(self):
-        pass
+    # def local_check(self):
+    #     pass
 
     def sharepoint_check(self):
         pass
