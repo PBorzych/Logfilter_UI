@@ -2,12 +2,17 @@ from pathlib import Path
 from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords
 import winsound
 
+def format_detail(detail):
+    if isinstance(detail, tuple):
+        return ' - '.join(str(item) for item in detail)
+    else:
+        return str(detail)
+
 def check_file_pairs_and_duplicates(directory):
     file_pairs = {}
     file_names = set()
     duplicates = []
     missing_pairs = []
-    output = ""
 
     for file_path in directory.glob('*.txt'):
         file_name = file_path.stem
@@ -17,7 +22,7 @@ def check_file_pairs_and_duplicates(directory):
             duplicates.append(file_name)
         file_names.add(file_name)
 
-        # Remove the word "confirmed" or "pending" from the -lowercase- file_name
+        # Remove "confirmed" or "pending" from the lowercase file_name
         lower_file_name = file_name.lower()
         pair_name = lower_file_name.replace("_confirmed", "").replace("_pending", "")
 
@@ -31,19 +36,8 @@ def check_file_pairs_and_duplicates(directory):
         if len(files) == 1:
             missing_pairs.append(files[0])
 
-    # Handle duplicates
-    if duplicates:
-        output += f"\nDuplicate files found:\n"
-        for duplicate in duplicates:
-            output += f" - {duplicate}\n"
-
-    # Handle missing pairs
-    if missing_pairs:
-        output += f"\n<span style='color:red; font-weight:bold;'>Files with missing pairs:</span>\n"
-        for missing_pair in missing_pairs:
-            output += f" - {missing_pair}\n"
-
-    return file_pairs, duplicates, missing_pairs, output
+    # Return only three values
+    return file_pairs, duplicates, missing_pairs
 
 def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True):
     """
@@ -51,40 +45,48 @@ def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True)
     Summarizes which files have errors based on specified keywords. Additionally, checks for duplicate files
     and ensures there is a corresponding "pending" logfile for every "confirmed" logfile and vice versa.
     """
-
-    print(f"folder_path: {folder_path}, type: {type(folder_path)}")
-    directory = Path(folder_path)
-    print(f"directory: {directory}, type: {type(directory)}")
-
     # Load ECU reference data and error keywords
     keywords = load_keywords_from_json(json_file_path)
     flattened_reference = load_ecu_reference(json_file_path)
 
-    # Store errors found for final summary
-    output = ""
+    # Initialize the output string with CSS styles
+    output = """
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h2 { color: #2E8B57; } /* Green headings */
+        h3 { color: #4682B4; } /* Blue subheadings */
+        ul { margin-left: 20px; }
+        li { margin-bottom: 5px; }
+        .error { color: red; }
+        .warning { color: red; }
+    </style>
+    """
 
     # Get file pairs, duplicates, and missing pairs
     directory = Path(folder_path)
-    file_pairs, duplicates, missing_pairs, pairs_output = check_file_pairs_and_duplicates(directory)
-    output += pairs_output
+    file_pairs, duplicates, missing_pairs = check_file_pairs_and_duplicates(directory)
 
     # Handle duplicates
     if duplicates:
-        output += f"\nDuplicate files found:\n"
+        output += "<h2>Duplicate Files Found:</h2><ul>"
         for duplicate in duplicates:
-            output += f" - {duplicate}\n"
+            output += f"<li>{duplicate}</li>"
+        output += "</ul>"
 
     # Handle missing pairs
     if missing_pairs:
-        output += f"\n<span style='color:red; font-weight:bold;'>Files with missing pairs:</span>\n"
+        output += "<h2 class='error'>Files with Missing Pairs:</h2><ul>"
         for missing_pair in missing_pairs:
-            output += f" - {missing_pair}\n"
+            output += f"<li>{missing_pair}</li>"
+        output += "</ul>"
+
+    # Store errors found for final summary
+    error_summary = {}
 
     # Iterate over all text files in the folder
-    error_summary = {}
     for file_path in directory.glob('*.txt'):
         if not is_running():
-            return output + "\nProcess was stopped by the user."
+            return output + "<p>Process was stopped by the user.</p>"
         with open(file_path, 'r', encoding='utf-8') as file:
             file_content = file.read()
 
@@ -100,15 +102,18 @@ def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True)
 
     # Build summary of errors across all files
     if error_summary:
-        output += "\n<span style='color:green; font-weight:bold;'>Summary of Errors:</span>\n"
+        output += "<h2>Summary of Errors:</h2>"
         for file_name, errors in error_summary.items():
-            output += f"\n<span style='font-weight:bold;'>{file_name}:</span>\n"
+            output += f"<h3>{file_name}:</h3><ul>"
             if errors["warning"]:
-                output += f" {errors['warning']}\n"
+                formatted_warning = format_detail(errors["warning"])
+                output += f"<li class='warning'>{formatted_warning}</li>"
             if errors["fail_details"]:
                 for detail in errors["fail_details"]:
-                    output += f"  - {detail}\n"
+                    formatted_detail = format_detail(detail)
+                    output += f"<li>{formatted_detail}</li>"
+            output += "</ul>"
     else:
-        output += "\nNo errors found across all files.\n"
+        output += "<p>No errors found across all files.</p>"
 
     return output
