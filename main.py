@@ -6,7 +6,7 @@ import time
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 from ui import Ui_Logfilter
 from functools import partial
 from pathlib import Path
@@ -73,7 +73,6 @@ class FullFolderCheckThread(QThread):
         self._is_running = False
 
 class MainWindow(QMainWindow, Ui_Logfilter):
-
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
@@ -100,25 +99,29 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.update_recent_directories_menu()
 
         # Connect buttons to methods
-        self.pushButton.clicked.connect(self.browse_directory)
-        self.pushButton_2.clicked.connect(self.start_monitoring)
-        self.pushButton_3.clicked.connect(self.stop_monitoring)
+        self.pushButton_browse.clicked.connect(self.browse_directory)
+        self.pushButton_start.clicked.connect(self.start_monitoring)
+        self.pushButton_stop.clicked.connect(self.stop_monitoring)
         self.actionOpen_Directory.triggered.connect(self.browse_directory)
         self.actionExit.triggered.connect(self.close_application)
         self.actionSave_Log.triggered.connect(self.save_log)
-        #self.actionLocal_Check.triggered.connect(self.local_check)
+        # self.actionLocal_Check.triggered.connect(self.local_check)  # Uncomment if implemented
         self.actionSharepoint_Check_N_A.triggered.connect(self.sharepoint_check)
-        self.actionabout.triggered.connect(self.about)
+        self.actionAbout.triggered.connect(self.about)
 
         # Connect the comboBox currentIndexChanged signal to the method
-        self.comboBox.currentIndexChanged.connect(self.combo_box_selection_changed)
+        self.comboBox_directory.currentIndexChanged.connect(self.combo_box_selection_changed)
 
         # Disable Stop button initially
-        self.pushButton_3.setEnabled(False)
+        self.pushButton_stop.setEnabled(False)
+
+        # Connect mode selection radio buttons if needed
+        self.radioButton_real_time.toggled.connect(self.mode_changed)
+        self.radioButton_full_folder_check.toggled.connect(self.mode_changed)
 
     def combo_box_selection_changed(self, index):
         if index >= 0:
-            directory = self.comboBox.itemText(index)
+            directory = self.comboBox_directory.itemText(index)
             if directory:
                 self.set_directory(directory)
 
@@ -147,15 +150,18 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
     def update_combo_box(self):
         # Block signals to prevent triggering currentIndexChanged
-        self.comboBox.blockSignals(True)
-        self.comboBox.clear()
+        self.comboBox_directory.blockSignals(True)
+        self.comboBox_directory.clear()
         for directory in self.recent_directories:
-            self.comboBox.addItem(directory)
+            self.comboBox_directory.addItem(directory)
         # Set the current index to match current_directory
-        index = self.recent_directories.index(self.current_directory)
-        self.comboBox.setCurrentIndex(index)
+        if self.current_directory in self.recent_directories:
+            index = self.recent_directories.index(self.current_directory)
+            self.comboBox_directory.setCurrentIndex(index)
+        else:
+            self.comboBox_directory.setCurrentIndex(-1)
         # Unblock signals after updating
-        self.comboBox.blockSignals(False)
+        self.comboBox_directory.blockSignals(False)
 
     def set_directory(self, directory):
         self.current_directory = directory
@@ -178,27 +184,10 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.update_window_title()
 
     def browse_directory(self):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", self.current_directory)
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory", self.current_directory)
         if directory:
-            self.current_directory = directory
+            self.set_directory(directory)
 
-            # Update recent directories list
-            if directory in self.recent_directories:
-                self.recent_directories.remove(directory)
-            self.recent_directories.insert(0, directory)
-            if len(self.recent_directories) > 5:  # Limit to 5 recent directories
-                self.recent_directories = self.recent_directories[:5]
-
-            # Save to external file
-            self.save_recent_directories()
-
-            # Update the menu and combo box
-            self.update_recent_directories_menu()
-            self.update_combo_box()
-
-            # Update the window title
-            self.update_window_title()
-    
     def start_monitoring(self):
         if not hasattr(self, 'current_directory') or not self.current_directory:
             QMessageBox.warning(self, "Warning", "Please select a directory before starting monitoring.")
@@ -210,18 +199,18 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.monitoring_thread.output_signal.connect(self.update_output)
             self.monitoring_thread.finished_signal.connect(self.monitoring_finished)
             self.monitoring_thread.start()
-            self.pushButton_2.setEnabled(False)
-            self.pushButton_3.setEnabled(True)
+            self.pushButton_start.setEnabled(False)
+            self.pushButton_stop.setEnabled(True)
             self.label_status_value.setText("Monitoring...")
             self.label_status_value.setStyleSheet("color: green;")
-        elif self.radioButton_.isChecked():
+        elif self.radioButton_full_folder_check.isChecked():
             # Start full folder error check
             self.full_folder_thread = FullFolderCheckThread(self.current_directory, json_file_path)
             self.full_folder_thread.output_signal.connect(self.update_full_folder_output)
             self.full_folder_thread.finished_signal.connect(self.full_folder_finished)
             self.full_folder_thread.start()
-            self.pushButton_2.setEnabled(False)
-            self.pushButton_3.setEnabled(True)
+            self.pushButton_start.setEnabled(False)
+            self.pushButton_stop.setEnabled(True)
             self.label_status_value.setText("Processing...")
             self.label_status_value.setStyleSheet("color: green;")
         else:
@@ -234,51 +223,84 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         if hasattr(self, 'full_folder_thread') and self.full_folder_thread.isRunning():
             self.full_folder_thread.stop()
             self.full_folder_thread.wait()
-        self.pushButton_2.setEnabled(True)
-        self.pushButton_3.setEnabled(False)
+        self.pushButton_start.setEnabled(True)
+        self.pushButton_stop.setEnabled(False)
         self.label_status_value.setText("Stopped")
         self.label_status_value.setStyleSheet("color: red;")
 
     def update_output(self, text):
-        self.textBrowser.append(text)
-    
+        self.textBrowser_log.append(text)
+
     def update_full_folder_output(self, text):
-        self.textBrowser.clear()
-        self.textBrowser.setHtml(text)
-    
+        self.textBrowser_log.clear()
+        self.textBrowser_log.setHtml(text)
+
     def full_folder_finished(self):
         QMessageBox.information(self, "Info", "Full folder error check has finished.")
-        self.pushButton_2.setEnabled(True)
-        self.pushButton_3.setEnabled(False)
+        self.pushButton_start.setEnabled(True)
+        self.pushButton_stop.setEnabled(False)
         self.label_status_value.setText("Completed")
         self.label_status_value.setStyleSheet("color: blue;")
 
     def monitoring_finished(self):
         QMessageBox.information(self, "Info", "Monitoring has finished.")
-        self.pushButton_2.setEnabled(True)
-        self.pushButton_3.setEnabled(False)
+        self.pushButton_start.setEnabled(True)
+        self.pushButton_stop.setEnabled(False)
         self.label_status_value.setText("Completed")
         self.label_status_value.setStyleSheet("color: blue;")
 
     def save_log(self):
-        pass
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save Log", "", "Text Files (*.txt);;All Files (*)", options=options)
+        if fileName:
+            try:
+                with open(fileName, 'w') as file:
+                    log_content = self.textBrowser_log.toPlainText()
+                    file.write(log_content)
+                self.label_status_value.setText(f"Log saved to: {fileName}")
+                self.label_status_value.setStyleSheet("color: green;")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save log: {str(e)}")
+                self.label_status_value.setText("Failed to save log")
+                self.label_status_value.setStyleSheet("color: red;")
+        else:
+            self.label_status_value.setText("Save log cancelled")
+            self.label_status_value.setStyleSheet("color: orange;")
 
     # def local_check(self):
+    #     # Implement your local_check method here
     #     pass
 
     def sharepoint_check(self):
-        pass
+        # Implement your sharepoint_check method here
+        QMessageBox.information(self, "Info", "Sharepoint Check is not available (N/A).")
 
     def about(self):
         QMessageBox.about(
-        self,
-        "About Logfilter",
-        f"<b>Logfilter</b><br>Version {version}<br><br>"
-        "This application is designed to filter logs from Silver Scan-Tool and perform live monitoring."
+            self,
+            "About Logfilter",
+            f"<b>Logfilter</b><br>Version {version}<br><br>"
+            "This application is designed to filter logs from Silver Scan-Tool and perform live monitoring."
         )
 
     def close_application(self):
-        self.close()
+        reply = QMessageBox.question(
+            self,
+            'Confirm Exit',
+            "Are you sure you want to exit?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if reply == QMessageBox.Yes:
+            self.close()
+
+    def mode_changed(self):
+        if self.radioButton_real_time.isChecked():
+            self.label_status_value.setText("Mode set to Real-time Monitoring")
+            self.label_status_value.setStyleSheet("color: blue;")
+        elif self.radioButton_full_folder_check.isChecked():
+            self.label_status_value.setText("Mode set to Full Folder Error Check")
+            self.label_status_value.setStyleSheet("color: blue;")
 
 if __name__ == "__main__":
     import sys

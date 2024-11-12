@@ -10,178 +10,194 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_Logfilter(object):
     def setupUi(self, Logfilter):
-        # Set object name and size for the UI's main window.
         Logfilter.setObjectName("Logfilter")
         Logfilter.resize(585, 808)
 
-        # Setup a central widget for the main window.
         self.centralwidget = QtWidgets.QWidget(Logfilter)
         self.centralwidget.setObjectName("centralwidget")
 
-        # Create a grid layout to organize the widgets in a grid
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
 
-        # Create a push button for browsing
-        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName("pushButton")
-        self.gridLayout.addWidget(self.pushButton, 0, 0, 1, 1)
-
-        # Create a vertical layout for the comboBox
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
-        self.comboBox.setObjectName("comboBox")
-        self.verticalLayout_3.addWidget(self.comboBox)
-        self.gridLayout.addLayout(self.verticalLayout_3, 2, 0, 1, 2)
-
-        # Create another vertical layout for more interactive components.
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-
-        # Label for the form.
-        self.label_3 = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(11)
-        font.setBold(True)
-        self.label_3.setFont(font)
-        self.label_3.setObjectName("label_3")
-        self.verticalLayout.addWidget(self.label_3)
-
-        # Radio buttons for real-time mode selection
-        self.radioButton_real_time = QtWidgets.QRadioButton(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.radioButton_real_time.setFont(font)
-        self.radioButton_real_time.setObjectName("radioButton_real_time")
-        self.verticalLayout.addWidget(self.radioButton_real_time)
-        self.radioButton_ = QtWidgets.QRadioButton(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.radioButton_.setFont(font)
-        self.radioButton_.setObjectName("radioButton_")
-        self.verticalLayout.addWidget(self.radioButton_)
-        self.gridLayout.addLayout(self.verticalLayout, 3, 0, 1, 2)
-
-        self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.gridLayout.addWidget(self.pushButton_2, 4, 0, 1, 1)
-
-        self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.gridLayout.addWidget(self.pushButton_3, 4, 1, 1, 1)
-
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label_4 = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        font.setBold(True)
-        self.label_4.setFont(font)
-        self.label_4.setObjectName("label_4")
-        self.verticalLayout_4.addWidget(self.label_4)
-        self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser.setObjectName("textBrowser")
-        self.verticalLayout_4.addWidget(self.textBrowser)
-        
-        # Create horizontal layout for status labels
-        self.horizontalLayout_status = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_status.setObjectName("horizontalLayout_status")
-
-        # Static label for the status
-        self.label_5 = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.label_5.setFont(font)
-        self.label_5.setObjectName("label_5")
-        self.horizontalLayout_status.addWidget(self.label_5)
-
-        # Dynamic label to display the status
-        self.label_status_value = QtWidgets.QLabel(self.centralwidget)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.label_status_value.setFont(font)
-        self.label_status_value.setObjectName("label_status_value")
-        self.horizontalLayout_status.addWidget(self.label_status_value)
-
-        # Add the horizontal layout to the verticalLayout_4
-        self.verticalLayout_4.addLayout(self.horizontalLayout_status)
-
-        # Add the vertical layout to the grid layout
-        self.gridLayout.addLayout(self.verticalLayout_4, 5, 0, 1, 2)
+        # Setup UI components
+        self._setup_main_layout()
+        self._setup_mode_selection()
+        self._setup_status_display()
+        self._setup_menu(Logfilter)
 
         Logfilter.setCentralWidget(self.centralwidget)
+        Logfilter.setStatusBar(self.statusbar)
+
+        self.retranslateUi(Logfilter)
+        QtCore.QMetaObject.connectSlotsByName(Logfilter)
+
+    def _setup_main_layout(self):
+        # Fonts
+        font_bold_11 = QtGui.QFont()
+        font_bold_11.setPointSize(11)
+        font_bold_11.setBold(True)
+
+        font_bold_12 = QtGui.QFont()
+        font_bold_12.setPointSize(12)
+        font_bold_12.setBold(True)
+
+        font_12 = QtGui.QFont()
+        font_12.setPointSize(12)
+
+        # Browse Button
+        self.pushButton_browse = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_browse.setObjectName("pushButton_browse")
+        self.gridLayout.addWidget(self.pushButton_browse, 0, 0, 1, 1)
+
+        # Directory ComboBox
+        self.comboBox_directory = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox_directory.setObjectName("comboBox_directory")
+        self.gridLayout.addWidget(self.comboBox_directory, 1, 0, 1, 2)
+
+        # Start and Stop Buttons
+        self.pushButton_start = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_start.setObjectName("pushButton_start")
+        self.gridLayout.addWidget(self.pushButton_start, 5, 0, 1, 1)
+
+        self.pushButton_stop = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_stop.setObjectName("pushButton_stop")
+        self.gridLayout.addWidget(self.pushButton_stop, 5, 1, 1, 1)
+
+        # Results / Log Label and TextBrowser
+        self.label_results = QtWidgets.QLabel(self.centralwidget)
+        self.label_results.setFont(font_bold_12)
+        self.label_results.setObjectName("label_results")
+        self.gridLayout.addWidget(self.label_results, 6, 0, 1, 2)
+
+        self.textBrowser_log = QtWidgets.QTextBrowser(self.centralwidget)
+        self.textBrowser_log.setObjectName("textBrowser_log")
+        self.gridLayout.addWidget(self.textBrowser_log, 7, 0, 1, 2)
+
+    def _setup_mode_selection(self):
+        # Fonts
+        font_bold_11 = QtGui.QFont()
+        font_bold_11.setPointSize(11)
+        font_bold_11.setBold(True)
+
+        font_12 = QtGui.QFont()
+        font_12.setPointSize(12)
+
+        # Mode Label
+        self.label_mode = QtWidgets.QLabel(self.centralwidget)
+        self.label_mode.setFont(font_bold_11)
+        self.label_mode.setObjectName("label_mode")
+        self.gridLayout.addWidget(self.label_mode, 2, 0, 1, 2)
+
+        # Radio Buttons for Mode Selection
+        self.radioButton_real_time = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButton_real_time.setFont(font_12)
+        self.radioButton_real_time.setObjectName("radioButton_real_time")
+        self.gridLayout.addWidget(self.radioButton_real_time, 3, 0, 1, 2)
+
+        self.radioButton_full_folder_check = QtWidgets.QRadioButton(self.centralwidget)
+        self.radioButton_full_folder_check.setFont(font_12)
+        self.radioButton_full_folder_check.setObjectName("radioButton_full_folder_check")
+        self.gridLayout.addWidget(self.radioButton_full_folder_check, 4, 0, 1, 2)
+
+    def _setup_status_display(self):
+        font_12 = QtGui.QFont()
+        font_12.setPointSize(12)
+
+        # Status Label and Value
+        self.label_status = QtWidgets.QLabel(self.centralwidget)
+        self.label_status.setFont(font_12)
+        self.label_status.setObjectName("label_status")
+        self.gridLayout.addWidget(self.label_status, 8, 0, 1, 1)
+
+        self.label_status_value = QtWidgets.QLabel(self.centralwidget)
+        self.label_status_value.setFont(font_12)
+        self.label_status_value.setObjectName("label_status_value")
+        self.gridLayout.addWidget(self.label_status_value, 8, 1, 1, 1)
+
+    def _setup_menu(self, Logfilter):
         self.menubar = QtWidgets.QMenuBar(Logfilter)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 585, 22))
         self.menubar.setObjectName("menubar")
+
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+
         self.menuSettings = QtWidgets.QMenu(self.menubar)
         self.menuSettings.setObjectName("menuSettings")
+
         self.menuHelp = QtWidgets.QMenu(self.menubar)
         self.menuHelp.setObjectName("menuHelp")
+
         Logfilter.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(Logfilter)
         self.statusbar.setObjectName("statusbar")
-        Logfilter.setStatusBar(self.statusbar)
+
+        # Actions
         self.actionOpen_Directory = QtWidgets.QAction(Logfilter)
         self.actionOpen_Directory.setObjectName("actionOpen_Directory")
+
         self.actionSave_Log = QtWidgets.QAction(Logfilter)
-        self.actionSave_Log.setObjectName("actionLoad_Log")
+        self.actionSave_Log.setObjectName("actionSave_Log")
+
         self.actionLoad_Log = QtWidgets.QAction(Logfilter)
         self.actionLoad_Log.setObjectName("actionLoad_Log")
+
         self.menuRecent_Directories = QtWidgets.QMenu(self.menuFile)
         self.menuRecent_Directories.setObjectName("menuRecent_Directories")
+
         self.actionExit = QtWidgets.QAction(Logfilter)
         self.actionExit.setObjectName("actionExit")
-        #self.actionLocal_Check = QtWidgets.QAction(Logfilter)
-        #self.actionLocal_Check.setObjectName("actionLocal_Check")
+
         self.actionSharepoint_Check_N_A = QtWidgets.QAction(Logfilter)
         self.actionSharepoint_Check_N_A.setObjectName("actionSharepoint_Check_N_A")
-        self.actionabout = QtWidgets.QAction(Logfilter)
-        self.actionabout.setObjectName("actionabout")
+
+        self.actionAbout = QtWidgets.QAction(Logfilter)
+        self.actionAbout.setObjectName("actionAbout")
+
+        # Add Actions to Menus
         self.menuFile.addAction(self.actionOpen_Directory)
         self.menuFile.addAction(self.actionSave_Log)
         self.menuFile.addAction(self.actionLoad_Log)
         self.menuFile.addMenu(self.menuRecent_Directories)
         self.menuFile.addAction(self.actionExit)
-        #self.menuSettings.addAction(self.actionLocal_Check)
+
         self.menuSettings.addAction(self.actionSharepoint_Check_N_A)
-        self.menuHelp.addAction(self.actionabout)
+        self.menuHelp.addAction(self.actionAbout)
+
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuSettings.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
-        self.retranslateUi(Logfilter)
-        QtCore.QMetaObject.connectSlotsByName(Logfilter)
-
     def retranslateUi(self, Logfilter):
         _translate = QtCore.QCoreApplication.translate
-        Logfilter.setWindowTitle(_translate("Logfilter", "MainWindow"))
-        self.pushButton.setText(_translate("Logfilter", "Browse"))
-        #self.label_2.setText(_translate("Logfilter", "Select Directory"))  
-        self.label_3.setText(_translate("Logfilter", "Mode"))
+        Logfilter.setWindowTitle(_translate("Logfilter", "Log Filter"))
+
+        self.pushButton_browse.setText(_translate("Logfilter", "Browse"))
+        self.pushButton_start.setText(_translate("Logfilter", "Start"))
+        self.pushButton_stop.setText(_translate("Logfilter", "Stop"))
+
+        self.label_mode.setText(_translate("Logfilter", "Mode"))
         self.radioButton_real_time.setText(_translate("Logfilter", "Real-time Monitoring"))
-        self.radioButton_.setText(_translate("Logfilter", "Full Folder Error Check"))
-        self.pushButton_2.setText(_translate("Logfilter", "Start"))
-        self.pushButton_3.setText(_translate("Logfilter", "Stop"))
-        self.label_4.setText(_translate("Logfilter", " Results / Log"))
-        self.label_5.setText(_translate("Logfilter", "Status:"))
+        self.radioButton_full_folder_check.setText(_translate("Logfilter", "Full Folder Error Check"))
+
+        self.label_results.setText(_translate("Logfilter", "Results / Log"))
+
+        self.label_status.setText(_translate("Logfilter", "Status:"))
         self.label_status_value.setText(_translate("Logfilter", "Not started"))
+
         self.menuFile.setTitle(_translate("Logfilter", "File"))
         self.menuSettings.setTitle(_translate("Logfilter", "Settings"))
         self.menuHelp.setTitle(_translate("Logfilter", "Help"))
+
         self.actionOpen_Directory.setText(_translate("Logfilter", "Open Directory"))
         self.actionSave_Log.setText(_translate("Logfilter", "Save Log"))
         self.actionLoad_Log.setText(_translate("Logfilter", "Load Log"))
         self.menuRecent_Directories.setTitle(_translate("Logfilter", "Recent Directories"))
         self.actionExit.setText(_translate("Logfilter", "Exit"))
-        #self.actionLocal_Check.setText(_translate("Logfilter", "Local Check"))
         self.actionSharepoint_Check_N_A.setText(_translate("Logfilter", "Sharepoint Check (N/A)"))
-        self.actionabout.setText(_translate("Logfilter", "About"))
+        self.actionAbout.setText(_translate("Logfilter", "About"))
 
 
 # if __name__ == "__main__":
