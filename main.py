@@ -30,11 +30,13 @@ version = "1.0.0"
 json_file_path = os.path.abspath('reference_list.json')
 keywords = load_keywords_from_json(json_file_path)
 
+
+
 class LogViewer(QMainWindow):
     def __init__(self, log_content, file_name="", parent=None):
         super(LogViewer, self).__init__(parent)
         self.setWindowTitle(f"Log Viewer - {file_name}" if file_name else "Log Viewer")
-        self.setWindowIcon(QIcon('logo.webp'))  # Optional: Set an icon if desired
+        self.setWindowIcon(QIcon('AurobayLogo.png'))
         self.resize(800, 600)  # Set a default size; adjust as needed
 
         # Central widget and layout
@@ -112,9 +114,19 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.setupUi(self)
 
         # Set the window icon
-        self.setWindowIcon(QIcon('logo.webp'))
+        self.setWindowIcon(QIcon('AurobayLogo.png'))
 
         self.settings = QSettings("Aurobay", "Logfilter")
+
+        # Define log subfolder path
+        self.LOG_SUBFOLDER = "Logs"
+        # self.current_directory = os.getcwd()
+        # self.log_directory = os.path.join(self.current_directory, self.LOG_SUBFOLDER)
+
+        # self.log_directory = os.path.join(self.current_directory, self.LOG_SUBFOLDER)
+
+        # # Ensure the Logs subfolder exists
+        # self.ensure_log_directory()
 
         # Load recent directories from external file
         self.recent_directories = self.load_recent_directories()
@@ -125,6 +137,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         else:
             self.current_directory = os.path.expanduser("~")  # Set to user's home directory
 
+        # Define the log directory as a subfolder within the scanned directory
+        self.log_directory = Path(self.current_directory) / self.LOG_SUBFOLDER
+
         # Clear and populate the comboBox with all recent directories
         self.update_combo_box()
 
@@ -133,6 +148,14 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         # Update the Recent Directories menu
         self.update_recent_directories_menu()
+
+        # Initialize recent_logs from QSettings or as an empty list
+        # self.recent_logs = self.settings.value("recent_logs", [])
+        # if self.recent_logs is None:
+        #     self.recent_logs = []
+
+        # Update the Recent Logs menu
+        #self.update_recent_logs_menu()
 
         # Connect buttons to methods
         self.pushButton_browse.clicked.connect(self.browse_directory)
@@ -157,6 +180,36 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         # List to keep references to open LogViewer windows
         self.log_viewers = []
+
+        # Ensure the Logs subfolder exists
+        # self.log_directory = os.path.join(os.getcwd(), "Logs")
+        self.ensure_log_directory()
+
+    def update_recent_logs_menu(self):
+        """Updates the Recent Logs submenu with the latest log files."""
+        # Clear the existing actions in the Recent Logs menu
+        self.menuRecent_Logs.clear()
+        # Iterate over the recent_logs list and add each as an action
+        for log in self.recent_logs:
+            action = QtWidgets.QAction(log, self)
+            # Connect the action to the open_recent_log method with the file path
+            action.triggered.connect(partial(self.open_recent_log, log))
+            self.menuRecent_Logs.addAction(action)
+
+    def ensure_log_directory(self):
+        """Ensures that the Logs subfolder exists within the scanned directory; creates it if it doesn't."""
+        if not os.path.exists(self.log_directory):
+            try:
+                os.makedirs(self.log_directory)
+                print(f"Created log directory at: {self.log_directory}")
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to create log directory at {self.log_directory}:\n{str(e)}"
+                )
+                self.label_status_value.setText("Failed to create log directory")
+                self.label_status_value.setStyleSheet("color: red;")
 
     def combo_box_selection_changed(self, index):
         if index >= 0:
@@ -187,6 +240,21 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             action.triggered.connect(partial(self.set_directory, directory))
             self.menuRecent_Directories.addAction(action)
 
+    def add_to_recent_logs(self, file_path):
+        """Adds a file path to the recent logs list and updates the menu."""
+        # Remove the file_path if it's already in the list to avoid duplicates
+        if file_path in self.recent_logs:
+            self.recent_logs.remove(file_path)
+        # Insert the file_path at the beginning of the list
+        self.recent_logs.insert(0, file_path)
+        # Keep only the 5 most recent logs
+        if len(self.recent_logs) > 5:
+            self.recent_logs = self.recent_logs[:5]
+        # Save the updated recent_logs list to QSettings
+        self.settings.setValue("recent_logs", self.recent_logs)
+        # Update the Recent Logs menu to reflect the changes
+        self.update_recent_logs_menu()
+
     def update_combo_box(self):
         # Block signals to prevent triggering currentIndexChanged
         self.comboBox_directory.blockSignals(True)
@@ -205,11 +273,17 @@ class MainWindow(QMainWindow, Ui_Logfilter):
     def set_directory(self, directory):
         self.current_directory = directory
 
+        # Update log_directory based on current_directory
+        self.log_directory = os.path.join(self.current_directory, self.LOG_SUBFOLDER)
+
+        # Ensure Logs subfolder exists within the new scanned directory
+        self.ensure_log_directory()
+
         # Update recent directories list
         if directory in self.recent_directories:
             self.recent_directories.remove(directory)
         self.recent_directories.insert(0, directory)
-        if len(self.recent_directories) > 5:  # Limit to 5 recent directories
+        if len(self.recent_directories) > 5:
             self.recent_directories = self.recent_directories[:5]
 
         # Save to external file
@@ -306,13 +380,14 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         timestamp = current_time.strftime("%Y%m%d-%H%M%S")  # Format: YYYYMMDD-HHMMSS
         default_filename = f"log-{timestamp}.txt"
 
-        # Set the default directory to the user's Documents folder
-        default_directory = os.path.expanduser(self.current_directory)
-        default_path = os.path.join(default_directory, default_filename)
+        # default_directory = os.path.expanduser(self.current_directory)
+        default_path = os.path.join(self.log_directory, default_filename)
 
         # Open a file dialog to choose where to save the log file with the default filename
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+
+        # options |= QFileDialog.DontUseNativeDialog
+
         fileName, _ = QFileDialog.getSaveFileName(
             self,
             "Save Log",
@@ -323,7 +398,22 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         if fileName:
             try:
-                # Determine the encoding based on file extension
+                # Normalize paths for comparison
+                normalized_log_dir = os.path.abspath(self.log_directory)
+                normalized_file_path = os.path.abspath(fileName)
+
+                # Check if the file is within the Logs subfolder
+                common_path = os.path.commonpath([normalized_log_dir, normalized_file_path])
+                if common_path != normalized_log_dir:
+                    # Warn the user and abort saving
+                    QMessageBox.warning(
+                        self,
+                        "Save Location Warning",
+                        f"Please save the log within the Logs directory:\n{self.log_directory}"
+                    )
+                    return  # Exit the method without saving
+
+                # Determine the content format based on file extension
                 if fileName.endswith('.html'):
                     content = self.textBrowser_log.toHtml()
                 else:
@@ -340,8 +430,15 @@ class MainWindow(QMainWindow, Ui_Logfilter):
                 # Save the last saved log path
                 self.settings.setValue("last_saved_log", fileName)
 
+                # Update recent logs
+                #self.add_to_recent_logs(fileName)
+
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to save log: {str(e)}")
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to save log: {str(e)}"
+                )
                 self.label_status_value.setText("Failed to save log")
                 self.label_status_value.setStyleSheet("color: red;")
         else:
@@ -352,21 +449,37 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Retrieve the last saved log path from QSettings
         last_log = self.settings.value("last_saved_log", "")
 
+         # Set initial directory to Logs subfolder
+        initial_dir = self.log_directory
+
+       # If last_log exists and is within Logs, set it as the initial file
+        if last_log and os.path.exists(last_log) and last_log.startswith(self.log_directory):
+            initial_file = last_log
+        else:
+            initial_file = ""
+
         # Open a file dialog to choose which log file to load
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        initial_dir = os.path.dirname(last_log) if os.path.exists(last_log) else os.path.expanduser(self.current_directory)
-        initial_file = last_log if os.path.exists(last_log) else ""
+        # options |= QFileDialog.DontUseNativeDialog  # Optional: Use native dialog if preferred
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Load Log",
-            initial_file,
+            initial_file,  # Start with last saved log if available and within Logs
             "Text Files (*.txt);;HTML Files (*.html);;All Files (*)",
             options=options
         )
 
         if fileName:
             try:
+                # Ensure the file is within the Logs subfolder
+                if not fileName.startswith(self.log_directory):
+                    QMessageBox.warning(
+                        self,
+                        "Load Location Warning",
+                        f"Please load the log from within the Logs directory:\n{self.log_directory}"
+                    )
+                    return  # Exit the method without loading
+
                 # Read the content based on file extension
                 if fileName.endswith('.html'):
                     with open(fileName, 'r', encoding='utf-8') as file:
@@ -379,6 +492,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
                 log_viewer = LogViewer(log_content=content, file_name=os.path.basename(fileName))
                 log_viewer.show()
 
+                # Connect the closed signal to remove the reference
+                log_viewer.closed.connect(lambda: self.log_viewers.remove(log_viewer))
+
                 # Keep a reference to prevent garbage collection
                 self.log_viewers.append(log_viewer)
 
@@ -388,6 +504,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
                 # Save the last loaded log path
                 self.settings.setValue("last_loaded_log", fileName)
+
+                # Update recent logs
+                #self.add_to_recent_logs(fileName)
 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load log: {str(e)}")
