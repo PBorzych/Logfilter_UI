@@ -14,6 +14,7 @@ from file_processing import read_file_contents, find_new_txt_files
 from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
 from real_time_monitoring import process_file
 from check_errors_in_folder import check_errors_in_folder, check_file_pairs_and_duplicates
+from datetime import datetime
 
 version = "1.0.0"
 
@@ -250,11 +251,30 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.label_status_value.setStyleSheet("color: blue;")
 
     def save_log(self):
+        
+        # Generate a timestamped default filename
+        current_time = datetime.now()
+        timestamp = current_time.strftime("%Y%m%d-%H%M%S")  # Format: YYYYMMDD-HHMMSS
+        default_filename = f"log-{timestamp}.txt"
+        
+        # Set the default directory to the user's Documents folder or any preferred path
+        default_directory = os.path.expanduser(self.current_directory)
+        default_path = os.path.join(default_directory, default_filename)
+        
+        # Open a file dialog to choose where to save the log file with the default filename
         options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save Log", "", "Text Files (*.txt);;All Files (*)", options=options)
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Log",
+            default_path,  # Use the generated default path
+            "Text Files (*.txt);;All Files (*)",
+            options=options
+        )
+        
         if fileName:
             try:
-                with open(fileName, 'w') as file:
+                with open(fileName, 'w', encoding='utf-8') as file:
                     log_content = self.textBrowser_log.toPlainText()
                     file.write(log_content)
                 self.label_status_value.setText(f"Log saved to: {fileName}")
