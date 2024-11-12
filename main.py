@@ -5,7 +5,7 @@ import time
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QTextCursor
 from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
 from ui import Ui_Logfilter
 from functools import partial
@@ -229,12 +229,22 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.label_status_value.setText("Stopped")
         self.label_status_value.setStyleSheet("color: red;")
 
-    def update_output(self, text):
+    def append_log(self, text):
+        #Appends text to the log and scrolls to the bottom.
         self.textBrowser_log.append(text)
+        self.textBrowser_log.moveCursor(QTextCursor.End)
+
+    def set_full_log(self, html_text):
+        #Sets the entire log with HTML content and scrolls to the bottom.
+        self.textBrowser_log.clear()
+        self.textBrowser_log.setHtml(html_text)
+        self.textBrowser_log.moveCursor(QTextCursor.End)
+
+    def update_output(self, text):
+        self.append_log(text)
 
     def update_full_folder_output(self, text):
-        self.textBrowser_log.clear()
-        self.textBrowser_log.setHtml(text)
+        self.set_full_log(text)
 
     def full_folder_finished(self):
         QMessageBox.information(self, "Info", "Full folder error check has finished.")
@@ -286,10 +296,6 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         else:
             self.label_status_value.setText("Save log cancelled")
             self.label_status_value.setStyleSheet("color: orange;")
-
-    # def local_check(self):
-    #     # Implement your local_check method here
-    #     pass
 
     def sharepoint_check(self):
         # Implement your sharepoint_check method here
