@@ -3,17 +3,25 @@
 import os
 import time
 
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QTextCursor
-from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QTextBrowser,
+    QVBoxLayout,
+    QWidget,
+    QFileDialog,
+    QMainWindow, 
+    QMessageBox, 
+    QFileDialog)
 from ui import Ui_Logfilter
 from functools import partial
 from pathlib import Path
-from file_processing import read_file_contents, find_new_txt_files
-from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
+from file_processing import find_new_txt_files
+from ecu_processing import  load_keywords_from_json
 from real_time_monitoring import process_file
-from check_errors_in_folder import check_errors_in_folder, check_file_pairs_and_duplicates
+from check_errors_in_folder import check_errors_in_folder
 from datetime import datetime
 
 version = "1.0.0"
@@ -21,6 +29,31 @@ version = "1.0.0"
 # Load keywords globally
 json_file_path = os.path.abspath('reference_list.json')
 keywords = load_keywords_from_json(json_file_path)
+
+class LogViewer(QMainWindow):
+    def __init__(self, log_content, file_name="", parent=None):
+        super(LogViewer, self).__init__(parent)
+        self.setWindowTitle(f"Log Viewer - {file_name}" if file_name else "Log Viewer")
+        self.setWindowIcon(QIcon('logo.webp'))  # Optional: Set an icon if desired
+        self.resize(800, 600)  # Set a default size; adjust as needed
+
+        # Central widget and layout
+        central_widget = QWidget()
+        layout = QVBoxLayout()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+        # QTextBrowser to display the log content
+        self.text_browser = QTextBrowser()
+        self.text_browser.setReadOnly(True)
+        self.text_browser.setOpenExternalLinks(True)  # Allow opening links if any
+        layout.addWidget(self.text_browser)
+
+        # Set the log content
+        if file_name.endswith('.html'):
+            self.text_browser.setHtml(log_content)
+        else:
+            self.text_browser.setPlainText(log_content)
 
 class MonitoringThread(QThread):
     output_signal = pyqtSignal(str)
@@ -81,6 +114,8 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Set the window icon
         self.setWindowIcon(QIcon('logo.webp'))
 
+        self.settings = QSettings("Aurobay", "Logfilter")
+
         # Load recent directories from external file
         self.recent_directories = self.load_recent_directories()
 
@@ -106,7 +141,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.actionOpen_Directory.triggered.connect(self.browse_directory)
         self.actionExit.triggered.connect(self.close_application)
         self.actionSave_Log.triggered.connect(self.save_log)
-        # self.actionLocal_Check.triggered.connect(self.local_check)  # Uncomment if implemented
+        self.actionLoad_Log.triggered.connect(self.load_log)
         self.actionSharepoint_Check_N_A.triggered.connect(self.sharepoint_check)
         self.actionAbout.triggered.connect(self.about)
 
@@ -119,6 +154,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Connect mode selection radio buttons if needed
         self.radioButton_real_time.toggled.connect(self.mode_changed)
         self.radioButton_full_folder_check.toggled.connect(self.mode_changed)
+
+        # List to keep references to open LogViewer windows
+        self.log_viewers = []
 
     def combo_box_selection_changed(self, index):
         if index >= 0:
@@ -231,8 +269,10 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
     def append_log(self, text):
         #Appends text to the log and scrolls to the bottom.
-        self.textBrowser_log.append(text)
-        self.textBrowser_log.moveCursor(QTextCursor.End)
+        existing_text = self.textBrowser_log.toPlainText()
+        if text not in existing_text:
+            self.textBrowser_log.append(text)
+            self.textBrowser_log.moveCursor(QTextCursor.End)
 
     def set_full_log(self, html_text):
         #Sets the entire log with HTML content and scrolls to the bottom.
@@ -261,40 +301,100 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.label_status_value.setStyleSheet("color: blue;")
 
     def save_log(self):
-        
         # Generate a timestamped default filename
         current_time = datetime.now()
         timestamp = current_time.strftime("%Y%m%d-%H%M%S")  # Format: YYYYMMDD-HHMMSS
         default_filename = f"log-{timestamp}.txt"
-        
-        # Set the default directory to the user's Documents folder or any preferred path
+
+        # Set the default directory to the user's Documents folder
         default_directory = os.path.expanduser(self.current_directory)
         default_path = os.path.join(default_directory, default_filename)
-        
+
         # Open a file dialog to choose where to save the log file with the default filename
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(
             self,
             "Save Log",
-            default_path,  # Use the generated default path
-            "Text Files (*.txt);;All Files (*)",
+            default_path, 
+            "Text Files (*.txt);;HTML Files (*.html);;All Files (*)", #Choice of .txt or .html
             options=options
         )
-        
+
         if fileName:
             try:
+                # Determine the encoding based on file extension
+                if fileName.endswith('.html'):
+                    content = self.textBrowser_log.toHtml()
+                else:
+                    content = self.textBrowser_log.toPlainText()
+
+                # Write the content to the file
                 with open(fileName, 'w', encoding='utf-8') as file:
-                    log_content = self.textBrowser_log.toPlainText()
-                    file.write(log_content)
+                    file.write(content)
+
+                # Update the status label
                 self.label_status_value.setText(f"Log saved to: {fileName}")
                 self.label_status_value.setStyleSheet("color: green;")
+
+                # Save the last saved log path
+                self.settings.setValue("last_saved_log", fileName)
+
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to save log: {str(e)}")
                 self.label_status_value.setText("Failed to save log")
                 self.label_status_value.setStyleSheet("color: red;")
         else:
             self.label_status_value.setText("Save log cancelled")
+            self.label_status_value.setStyleSheet("color: orange;")
+
+    def load_log(self):
+        # Retrieve the last saved log path from QSettings
+        last_log = self.settings.value("last_saved_log", "")
+
+        # Open a file dialog to choose which log file to load
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        initial_dir = os.path.dirname(last_log) if os.path.exists(last_log) else os.path.expanduser(self.current_directory)
+        initial_file = last_log if os.path.exists(last_log) else ""
+        fileName, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Log",
+            initial_file,
+            "Text Files (*.txt);;HTML Files (*.html);;All Files (*)",
+            options=options
+        )
+
+        if fileName:
+            try:
+                # Read the content based on file extension
+                if fileName.endswith('.html'):
+                    with open(fileName, 'r', encoding='utf-8') as file:
+                        content = file.read()
+                else:
+                    with open(fileName, 'r', encoding='utf-8') as file:
+                        content = file.read()
+
+                # Create and show the LogViewer window
+                log_viewer = LogViewer(log_content=content, file_name=os.path.basename(fileName))
+                log_viewer.show()
+
+                # Keep a reference to prevent garbage collection
+                self.log_viewers.append(log_viewer)
+
+                # Update the status label
+                self.label_status_value.setText(f"Log loaded from: {fileName}")
+                self.label_status_value.setStyleSheet("color: green;")
+
+                # Save the last loaded log path
+                self.settings.setValue("last_loaded_log", fileName)
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to load log: {str(e)}")
+                self.label_status_value.setText("Failed to load log")
+                self.label_status_value.setStyleSheet("color: red;")
+        else:
+            self.label_status_value.setText("Load log cancelled")
             self.label_status_value.setStyleSheet("color: orange;")
 
     def sharepoint_check(self):
