@@ -13,8 +13,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QFileDialog,
     QMainWindow, 
-    QMessageBox, 
-    QFileDialog)
+    QMessageBox)
 from ui import Ui_Logfilter
 from functools import partial
 from pathlib import Path
@@ -33,11 +32,14 @@ keywords = load_keywords_from_json(json_file_path)
 
 
 class LogViewer(QMainWindow):
+    closed = pyqtSignal()
     def __init__(self, log_content, file_name="", parent=None):
         super(LogViewer, self).__init__(parent)
         self.setWindowTitle(f"Log Viewer - {file_name}" if file_name else "Log Viewer")
         self.setWindowIcon(QIcon('AurobayLogo.png'))
         self.resize(800, 600)  # Set a default size; adjust as needed
+
+        closed = pyqtSignal()
 
         # Central widget and layout
         central_widget = QWidget()
@@ -56,6 +58,10 @@ class LogViewer(QMainWindow):
             self.text_browser.setHtml(log_content)
         else:
             self.text_browser.setPlainText(log_content)
+    
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
 
 class MonitoringThread(QThread):
     output_signal = pyqtSignal(str)
@@ -446,50 +452,61 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.label_status_value.setStyleSheet("color: orange;")
 
     def load_log(self):
-        # Retrieve the last saved log path from QSettings
-        last_log = self.settings.value("last_saved_log", "")
+        # Ensure self.log_directory is defined and points to the Logs directory
+        if not hasattr(self, 'log_directory') or not self.log_directory:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Log directory is not defined. Please set self.log_directory."
+            )
+            self.label_status_value.setText("Load log failed: Log directory undefined")
+            self.label_status_value.setStyleSheet("color: red;")
+            return
 
-         # Set initial directory to Logs subfolder
+        # Set initial directory to Logs subfolder
         initial_dir = self.log_directory
-
-       # If last_log exists and is within Logs, set it as the initial file
-        if last_log and os.path.exists(last_log) and last_log.startswith(self.log_directory):
-            initial_file = last_log
-        else:
-            initial_file = ""
 
         # Open a file dialog to choose which log file to load
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog  # Optional: Use native dialog if preferred
+        # Uncomment the next line if you prefer not to use the native dialog
+        # options |= QFileDialog.DontUseNativeDialog
+
+        # Convert Path to string for QFileDialog
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Load Log",
-            initial_file,  # Start with last saved log if available and within Logs
+            str(initial_dir),  # Convert Path to string
             "Text Files (*.txt);;HTML Files (*.html);;All Files (*)",
             options=options
         )
 
         if fileName:
             try:
-                # Ensure the file is within the Logs subfolder
-                if not fileName.startswith(self.log_directory):
+                selected_file = Path(fileName).resolve()
+                log_dir_resolved = self.log_directory.resolve()
+
+                # Ensure the selected file is within the Logs subfolder
+                try:
+                    selected_file.relative_to(log_dir_resolved)
+                except ValueError:
                     QMessageBox.warning(
                         self,
                         "Load Location Warning",
                         f"Please load the log from within the Logs directory:\n{self.log_directory}"
                     )
+                    self.label_status_value.setText("Load log failed: Invalid directory")
+                    self.label_status_value.setStyleSheet("color: red;")
                     return  # Exit the method without loading
 
                 # Read the content based on file extension
-                if fileName.endswith('.html'):
-                    with open(fileName, 'r', encoding='utf-8') as file:
-                        content = file.read()
+                if selected_file.suffix.lower() == '.html':
+                    content = selected_file.read_text(encoding='utf-8')
+                    # Optionally, parse or process HTML as needed
                 else:
-                    with open(fileName, 'r', encoding='utf-8') as file:
-                        content = file.read()
+                    content = selected_file.read_text(encoding='utf-8')
 
                 # Create and show the LogViewer window
-                log_viewer = LogViewer(log_content=content, file_name=os.path.basename(fileName))
+                log_viewer = LogViewer(log_content=content, file_name=selected_file.name)
                 log_viewer.show()
 
                 # Connect the closed signal to remove the reference
@@ -499,14 +516,14 @@ class MainWindow(QMainWindow, Ui_Logfilter):
                 self.log_viewers.append(log_viewer)
 
                 # Update the status label
-                self.label_status_value.setText(f"Log loaded from: {fileName}")
+                self.label_status_value.setText(f"Log loaded from: {selected_file}")
                 self.label_status_value.setStyleSheet("color: green;")
 
-                # Save the last loaded log path
-                self.settings.setValue("last_loaded_log", fileName)
+                # Optional: Save the last loaded log path
+                self.settings.setValue("last_loaded_log", str(selected_file))
 
-                # Update recent logs
-                #self.add_to_recent_logs(fileName)
+                # Optional: Update recent logs
+                # self.add_to_recent_logs(str(selected_file))
 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to load log: {str(e)}")

@@ -1,6 +1,7 @@
 Logfilter 1.0.0
 
 TODO:
+    o Fix loading problem!
     / Browse function and recent function          
     o Save log file function 
     / Status info, "ready for live monitoring", "finished reading whole path" etc. 
