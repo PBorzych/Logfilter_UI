@@ -280,7 +280,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.current_directory = directory
 
         # Update log_directory based on current_directory
-        self.log_directory = os.path.join(self.current_directory, self.LOG_SUBFOLDER)
+        self.log_directory = Path(self.current_directory) / self.LOG_SUBFOLDER
 
         # Ensure Logs subfolder exists within the new scanned directory
         self.ensure_log_directory()
