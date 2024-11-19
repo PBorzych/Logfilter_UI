@@ -1,6 +1,7 @@
 from pathlib import Path
 from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords
 import winsound
+import re
 
 def format_detail(detail):
     if isinstance(detail, tuple):
@@ -22,9 +23,12 @@ def check_file_pairs_and_duplicates(directory):
             duplicates.append(file_name)
         file_names.add(file_name)
 
-        # Remove "confirmed" or "pending" from the lowercase file_name
+        # Remove any substring containing "confirm" or "pending" (case-insensitive) and combinations like "Pending&Confirm"
         lower_file_name = file_name.lower()
-        pair_name = lower_file_name.replace("_confirmed", "").replace("_pending", "")
+        pair_name = re.sub(r'_?(pending[&]?confirm|confirm[&]?pending|pending|confirm)', '', lower_file_name)
+
+        # Remove any trailing underscores or special characters left after replacement
+        pair_name = re.sub(r'[_&]+$', '', pair_name)
 
         if pair_name in file_pairs:
             file_pairs[pair_name].append(file_name)
