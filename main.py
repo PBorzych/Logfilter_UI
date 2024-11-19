@@ -2,6 +2,8 @@
 
 import os
 import time
+import traceback
+import sys
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSettings, QThread, pyqtSignal
@@ -12,7 +14,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QFileDialog,
-    QMainWindow, 
+    QMainWindow,
+    QApplication, 
     QMessageBox)
 from ui import Ui_Logfilter
 from functools import partial
@@ -24,6 +27,14 @@ from check_errors_in_folder import check_errors_in_folder
 from datetime import datetime
 
 version = "1.0.0"
+
+# Crash log directory and file
+CRASH_LOG_DIRECTORY = "CrashLogs"
+CRASH_LOG_FILE = os.path.join(CRASH_LOG_DIRECTORY, "crash_report.log")
+
+# Ensure the crash log directory exists
+if not os.path.exists(CRASH_LOG_DIRECTORY):
+    os.makedirs(CRASH_LOG_DIRECTORY)
 
 # Load keywords globally
 json_file_path = os.path.abspath('reference_list.json')
@@ -575,8 +586,35 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.label_status_value.setText("Mode set to Full Folder Error Check")
             self.label_status_value.setStyleSheet("color: blue;")
 
+def log_crash_to_file(exc_type, exc_value, exc_traceback):
+    """Logs the uncaught exception details to a file."""
+    with open(CRASH_LOG_FILE, "a") as crash_log:
+        crash_log.write("----- Crash Report -----\n")
+        crash_log.write(f"Exception Type: {exc_type.__name__}\n")
+        crash_log.write(f"Exception Message: {exc_value}\n")
+        crash_log.write("Traceback:\n")
+        traceback.print_tb(exc_traceback, file=crash_log)
+        crash_log.write("\n")
+
+def handle_uncaught_exception(exc_type, exc_value, exc_traceback):
+    """Handles uncaught exceptions and logs them."""
+    log_crash_to_file(exc_type, exc_value, exc_traceback)
+    
+    # Notify the user about the crash
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Critical)
+    msg.setWindowTitle("Application Crashed")
+    msg.setText("The application encountered an error and needs to close.")
+    msg.setInformativeText(f"A crash report has been saved to:\n{CRASH_LOG_FILE}")
+    msg.exec_()
+
+    # Call the default handler
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+# Set the global exception hook
+sys.excepthook = handle_uncaught_exception
+
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
