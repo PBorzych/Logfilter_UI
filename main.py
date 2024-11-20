@@ -29,18 +29,15 @@ from datetime import datetime
 version = "1.0.0"
 
 # Crash log directory and file
-CRASH_LOG_DIRECTORY = "CrashLogs"
-CRASH_LOG_FILE = os.path.join(CRASH_LOG_DIRECTORY, "crash_report.log")
+CRASH_LOG_DIRECTORY = Path("CrashLogs")
+CRASH_LOG_FILE = CRASH_LOG_DIRECTORY / "crash_report-log"
 
 # Ensure the crash log directory exists
-if not os.path.exists(CRASH_LOG_DIRECTORY):
-    os.makedirs(CRASH_LOG_DIRECTORY)
+CRASH_LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 # Load keywords globally
-json_file_path = os.path.abspath('reference_list.json')
+json_file_path = Path('reference_list.json').resolve()
 keywords = load_keywords_from_json(json_file_path)
-
-
 
 class LogViewer(QMainWindow):
     closed = pyqtSignal()
@@ -133,13 +130,13 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Determine the base path
         if getattr(sys, 'frozen', False):
             # Running in a PyInstaller bundle
-            base_path = sys._MEIPASS
+            base_path = Path(sys._MEIPASS)
         else:
             # Running in a normal Python environment
-            base_path = os.path.dirname(__file__)
+            base_path = Path(__file__).parent
 
         # Construct the full path to the icon
-        icon_path = os.path.join(base_path, 'AurobayLogo.png')
+        icon_path = base_path / 'AurobayLogo.png'
 
         # Set the window icon
         self.setWindowIcon(QIcon(icon_path))
@@ -154,9 +151,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         # Initialize current_directory
         if self.recent_directories:
-            self.current_directory = self.recent_directories[0]
+            self.current_directory = Path(self.recent_directories[0])
         else:
-            self.current_directory = os.path.expanduser("~")  # Set to user's home directory
+            self.current_directory = Path.home()  # Set to user's home directory
 
         # Define the log directory as a subfolder within the scanned directory
         self.log_directory = Path(self.current_directory) / self.LOG_SUBFOLDER
