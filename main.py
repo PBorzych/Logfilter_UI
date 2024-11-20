@@ -1,6 +1,5 @@
 # Version 1.0.0
 
-import os
 import time
 import traceback
 import sys
@@ -25,6 +24,7 @@ from ecu_processing import  load_keywords_from_json
 from real_time_monitoring import process_file
 from check_errors_in_folder import check_errors_in_folder
 from datetime import datetime
+from functools import partial
 
 version = "1.0.0"
 
@@ -139,7 +139,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         icon_path = base_path / 'AurobayLogo.png'
 
         # Set the window icon
-        self.setWindowIcon(QIcon(icon_path))
+        self.setWindowIcon(QIcon(str(icon_path)))
 
         self.settings = QSettings("Aurobay", "Logfilter")
 
@@ -153,7 +153,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         if self.recent_directories:
             self.current_directory = Path(self.recent_directories[0])
         else:
-            self.current_directory = Path.home()  # Set to user's home directory
+            self.current_directory = Path.home()  # Use the user's home directory
 
         # Define the log directory as a subfolder within the scanned directory
         self.log_directory = Path(self.current_directory) / self.LOG_SUBFOLDER
@@ -207,15 +207,18 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
     def ensure_log_directory(self):
         """Ensures that the Logs subfolder exists within the scanned directory; creates it if it doesn't."""
-        if not os.path.exists(self.log_directory):
+        # Ensure self.log_directory is a Path object
+        log_directory_path = Path(self.log_directory)
+
+        if not log_directory_path.exists():
             try:
-                os.makedirs(self.log_directory)
-                print(f"Created log directory at: {self.log_directory}")
+                log_directory_path.mkdir(parents=True, exist_ok=True)
+                print(f"Created log directory at: {log_directory_path}")
             except Exception as e:
                 QMessageBox.critical(
                     self,
                     "Error",
-                    f"Failed to create log directory at {self.log_directory}:\n{str(e)}"
+                    f"Failed to create log directory at {log_directory_path}:\n{str(e)}"
                 )
                 self.label_status_value.setText("Failed to create log directory")
                 self.label_status_value.setStyleSheet("color: red;")
@@ -231,10 +234,16 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
     def load_recent_directories(self):
         directories = self.settings.value("recent_directories")
-        return directories if directories else []
+        # Convert directories to Path objects
+        if directories:
+            return [Path(dir_str) for dir_str in directories]
+        else:
+            return []
 
     def save_recent_directories(self):
-        self.settings.setValue("recent_directories", self.recent_directories)  
+        # Convert Path objects to strings before saving
+        directories_as_strings = [str(dir_path) for dir_path in self.recent_directories]
+        self.settings.setValue("recent_directories", directories_as_strings)
 
     # def load_recent_directories(self):
     #     try:
@@ -252,12 +261,14 @@ class MainWindow(QMainWindow, Ui_Logfilter):
     def update_recent_directories_menu(self):
         self.menuRecent_Directories.clear()
         for directory in self.recent_directories:
-            action = QtWidgets.QAction(directory, self)
+            action = QtWidgets.QAction(str(directory), self)
             action.triggered.connect(partial(self.set_directory, directory))
             self.menuRecent_Directories.addAction(action)
 
     def add_to_recent_logs(self, file_path):
         """Adds a file path to the recent logs list and updates the menu."""
+         # Ensure file_path is a Path object
+        file_path = Path(file_path)
         # Remove the file_path if it's already in the list to avoid duplicates
         if file_path in self.recent_logs:
             self.recent_logs.remove(file_path)
@@ -276,7 +287,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.comboBox_directory.blockSignals(True)
         self.comboBox_directory.clear()
         for directory in self.recent_directories:
-            self.comboBox_directory.addItem(directory)
+            self.comboBox_directory.addItem(str(directory))
         # Set the current index to match current_directory
         if self.current_directory in self.recent_directories:
             index = self.recent_directories.index(self.current_directory)
@@ -287,7 +298,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.comboBox_directory.blockSignals(False)
 
     def set_directory(self, directory):
-        self.current_directory = directory
+        self.current_directory = Path(directory)
 
         # Update log_directory based on current_directory
         self.log_directory = Path(self.current_directory) / self.LOG_SUBFOLDER
@@ -313,9 +324,10 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.update_window_title()
 
     def browse_directory(self):
-        directory = QFileDialog.getExistingDirectory(self, "Select Directory", self.current_directory)
+        current_directory = Path(self.current_directory)
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory", str(current_directory))
         if directory:
-            self.set_directory(directory)
+            self.set_directory(Path(directory))
 
     def start_monitoring(self):
         if not hasattr(self, 'current_directory') or not self.current_directory:
@@ -396,8 +408,11 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         timestamp = current_time.strftime("%Y%m%d-%H%M%S")  # Format: YYYYMMDD-HHMMSS
         default_filename = f"log-{timestamp}.txt"
 
-        # default_directory = os.path.expanduser(self.current_directory)
-        default_path = os.path.join(self.log_directory, default_filename)
+        # Ensure log_directory_path is a Path object
+        log_directory_path = Path(self.log_directory)
+
+        # Create the default path for the save dialog
+        default_path = log_directory_path / default_filename
 
         # Open a file dialog to choose where to save the log file with the default filename
         options = QFileDialog.Options()
@@ -407,7 +422,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         fileName, _ = QFileDialog.getSaveFileName(
             self,
             "Save Log",
-            default_path, 
+            str(default_path), 
             "Text Files (*.txt);;HTML Files (*.html);;All Files (*)", #Choice of .txt or .html
             options=options
         )
@@ -415,12 +430,11 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         if fileName:
             try:
                 # Normalize paths for comparison
-                normalized_log_dir = os.path.abspath(self.log_directory)
-                normalized_file_path = os.path.abspath(fileName)
+                normalized_log_dir = log_directory_path.resolve()
+                normalized_file_path = Path(fileName).resolve()
 
                 # Check if the file is within the Logs subfolder
-                common_path = os.path.commonpath([normalized_log_dir, normalized_file_path])
-                if common_path != normalized_log_dir:
+                if not normalized_file_path.is_relative_to(normalized_log_dir):
                     # Warn the user and abort saving
                     QMessageBox.warning(
                         self,
@@ -430,7 +444,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
                     return  # Exit the method without saving
 
                 # Determine the content format based on file extension
-                if fileName.endswith('.html'):
+                if normalized_file_path.suffix == '.html':
                     content = self.textBrowser_log.toHtml()
                 else:
                     content = self.textBrowser_log.toPlainText()
@@ -440,11 +454,11 @@ class MainWindow(QMainWindow, Ui_Logfilter):
                     file.write(content)
 
                 # Update the status label
-                self.label_status_value.setText(f"Log saved to: {fileName}")
+                self.label_status_value.setText(f"Log saved to: {normalized_file_path}")
                 self.label_status_value.setStyleSheet("color: green;")
 
                 # Save the last saved log path
-                self.settings.setValue("last_saved_log", fileName)
+                self.settings.setValue("last_saved_log", normalized_file_path)
 
             except Exception as e:
                 QMessageBox.critical(
