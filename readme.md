@@ -12,8 +12,8 @@ TODO:
     o Add/Remove Keywords in the program
     o Ignore the word error in when it is "EGR ERROR"
     o Pending/Confirmed in relation to IGNCNTR 
-    o confirm and confirmed as keywords
-    o logo not shown after compilation
+    / confirm and confirmed as keywords
+    / logo not shown after compilation
 
 Compile with this:
 pyinstaller --onefile --windowed --add-data "AurobayLogo.png;." main.py
