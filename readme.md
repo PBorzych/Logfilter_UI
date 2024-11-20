@@ -14,6 +14,8 @@ TODO:
     o Pending/Confirmed in relation to IGNCNTR 
     / confirm and confirmed as keywords
     / logo not shown after compilation
+    o Unify path handling with pathlib
+    o Clean up commented code
 
 Compile with this:
 pyinstaller --onefile --windowed --add-data "AurobayLogo.png;." main.py

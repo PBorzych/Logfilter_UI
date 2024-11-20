@@ -7,5 +7,6 @@ build
 dist
 ui_folder
 recent_directories.txt
-__pycache__/check_errors_in_folder.cpython-310.pyc
 CrashLogs/crash_report.log
+CrashLogs
+logfilter_env
