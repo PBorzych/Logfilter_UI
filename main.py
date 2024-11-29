@@ -1,4 +1,4 @@
-# Version 1.0.0
+# Version 1.0.1
 
 import time
 import traceback
@@ -26,7 +26,7 @@ from check_errors_in_folder import check_errors_in_folder
 from datetime import datetime
 from functools import partial
 
-version = "1.0.0"
+version = "1.0.1"
 
 # Crash log directory and file
 CRASH_LOG_DIRECTORY = Path("CrashLogs")
