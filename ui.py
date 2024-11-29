@@ -65,6 +65,11 @@ class Ui_Logfilter(object):
         self.pushButton_stop.setObjectName("pushButton_stop")
         self.gridLayout.addWidget(self.pushButton_stop, 5, 1, 1, 1)
 
+        #Clear Button
+        self.pushButton_clear = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_clear.setObjectName("pushButton_clear")
+        self.gridLayout.addWidget(self.pushButton_clear, 8, 0, 1, 1)
+
         # Results / Log Label and TextBrowser
         self.label_results = QtWidgets.QLabel(self.centralwidget)
         self.label_results.setFont(font_bold_12)
@@ -109,12 +114,12 @@ class Ui_Logfilter(object):
         self.label_status = QtWidgets.QLabel(self.centralwidget)
         self.label_status.setFont(font_12)
         self.label_status.setObjectName("label_status")
-        self.gridLayout.addWidget(self.label_status, 8, 0, 1, 1)
+        self.gridLayout.addWidget(self.label_status, 9, 0, 1, 1)
 
         self.label_status_value = QtWidgets.QLabel(self.centralwidget)
         self.label_status_value.setFont(font_12)
         self.label_status_value.setObjectName("label_status_value")
-        self.gridLayout.addWidget(self.label_status_value, 8, 1, 1, 1)
+        self.gridLayout.addWidget(self.label_status_value, 9, 1, 1, 1)
 
     def _setup_menu(self, Logfilter):
         self.menubar = QtWidgets.QMenuBar(Logfilter)
@@ -183,6 +188,8 @@ class Ui_Logfilter(object):
         self.radioButton_full_folder_check.setText(_translate("Logfilter", "Full Folder Error Check"))
 
         self.label_results.setText(_translate("Logfilter", "Results / Log"))
+
+        self.pushButton_clear.setText(_translate("Logfilter", "Clear"))
 
         self.label_status.setText(_translate("Logfilter", "Status:"))
         self.label_status_value.setText(_translate("Logfilter", "Not started"))

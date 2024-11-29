@@ -194,6 +194,9 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Ensure the Logs subfolder exists
         self.ensure_log_directory()
 
+        # Connect the Clear button to the clear_log method
+        self.pushButton_clear.clicked.connect(self.clear_log)
+
     def update_recent_logs_menu(self):
         """Updates the Recent Logs submenu with the latest log files."""
         # Clear the existing actions in the Recent Logs menu
@@ -387,6 +390,12 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
     def update_full_folder_output(self, text):
         self.set_full_log(text)
+
+    def clear_log(self):
+        #Clears the content of the text browser.
+        self.textBrowser_log.clear()
+        self.label_status_value.setText("Log cleared")
+        self.label_status_value.setStyleSheet("color: blue;")
 
     def full_folder_finished(self):
         QMessageBox.information(self, "Info", "Full folder error check has finished.")
