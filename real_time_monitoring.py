@@ -119,7 +119,6 @@ def compare_status_with_logfile(logfile_name, detailed_faults):
         output += f"<br>Status matches: {logfile_status.capitalize()}<br>"
     else:
         output += f"<span style='color:red;'>Status mismatch! Logfile: {logfile_status.capitalize()}, Determined: {determined_status.capitalize()}</span><br>"
-        # Optionally, handle beep sound or other notifications
     return output
         
 def process_file(file, json_file_path):
