@@ -1,7 +1,7 @@
 Logfilter 1.0.0
 
 TODO:
-    o CLR Screen when changing vehicle and clr button. 
+    o/ CLR Screen when changing vehicle and /clr button. 
     o Organize the functions in to diff. files 
     o Add/Remove Keywords in the program
     o Ignore the word error in when it is "EGR ERROR"

@@ -1,5 +1,5 @@
 from pathlib import Path
-from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords
+from modules.ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords
 import winsound
 import re
 

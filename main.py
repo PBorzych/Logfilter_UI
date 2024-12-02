@@ -1,126 +1,30 @@
 # Version 1.0.1
 
-import time
-import traceback
 import sys
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QSettings, QThread, pyqtSignal
+from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QIcon, QTextCursor
 from PyQt5.QtWidgets import (
     QMainWindow,
-    QTextBrowser,
-    QVBoxLayout,
-    QWidget,
     QFileDialog,
     QMainWindow,
-    QApplication, 
+    QApplication,
     QMessageBox)
 from ui import Ui_Logfilter
 from functools import partial
 from pathlib import Path
-from file_processing import find_new_txt_files
-from ecu_processing import  load_keywords_from_json
-from real_time_monitoring import process_file
-from check_errors_in_folder import check_errors_in_folder
+from modules.ecu_processing import  load_keywords_from_json
 from datetime import datetime
 from functools import partial
-
-version = "1.0.1"
-
-# Crash log directory and file
-CRASH_LOG_DIRECTORY = Path("CrashLogs")
-CRASH_LOG_FILE = CRASH_LOG_DIRECTORY / "crash_report-log"
-
-# Ensure the crash log directory exists
-CRASH_LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
+from custom_widgets import LogViewer
+from threads import MonitoringThread, FullFolderCheckThread
+from exceptions_handler import handle_uncaught_exception
+from constants import CRASH_LOG_FILE, CRASH_LOG_DIRECTORY, version
 
 # Load keywords globally
 json_file_path = Path('reference_list.json').resolve()
 keywords = load_keywords_from_json(json_file_path)
-
-class LogViewer(QMainWindow):
-    closed = pyqtSignal()
-    def __init__(self, log_content, file_name="", parent=None):
-        super(LogViewer, self).__init__(parent)
-        self.setWindowTitle(f"Log Viewer - {file_name}" if file_name else "Log Viewer")
-        self.setWindowIcon(QIcon('AurobayLogo.png'))
-        self.resize(800, 600)  # Set a default size
-
-        #closed = pyqtSignal()
-
-        # Central widget and layout
-        central_widget = QWidget()
-        layout = QVBoxLayout()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-        # QTextBrowser to display the log content
-        self.text_browser = QTextBrowser()
-        self.text_browser.setReadOnly(True)
-        self.text_browser.setOpenExternalLinks(True)  # Allow opening links if any
-        layout.addWidget(self.text_browser)
-
-        # Set the log content
-        if file_name.endswith('.html'):
-            self.text_browser.setHtml(log_content)
-        else:
-            self.text_browser.setPlainText(log_content)
-    
-    def closeEvent(self, event):
-        self.closed.emit()
-        event.accept()
-
-class MonitoringThread(QThread):
-    output_signal = pyqtSignal(str)
-    finished_signal = pyqtSignal()
-
-    def __init__(self, directory, json_file_path):
-        super().__init__()
-        self.directory = directory
-        self.json_file_path = json_file_path
-        self._is_running = True
-
-    def run(self):
-        processed_files = set()
-
-        # Populate initial set of processed files to avoid re-processing
-        directory = Path(self.directory)
-        for file in directory.glob('*.txt'):
-            processed_files.add(file.name)
-
-        # Continuous monitoring loop
-        while self._is_running:
-            new_files = find_new_txt_files(self.directory, processed_files)
-            for file in new_files:
-                output = process_file(file, self.json_file_path)
-                self.output_signal.emit(output)
-                processed_files.add(file.name)
-            time.sleep(5)
-        self.finished_signal.emit()
-
-    def stop(self):
-        self._is_running = False
-
-class FullFolderCheckThread(QThread):
-    output_signal = pyqtSignal(str)
-    finished_signal = pyqtSignal()
-
-    def __init__(self, directory, json_file_path):
-        super().__init__()
-        self.directory = directory
-        self.json_file_path = json_file_path
-        self._is_running = True
-
-    def run(self):
-        if self._is_running:
-            # Pass the is_running function to check_errors_in_folder
-            output = check_errors_in_folder(self.directory, self.json_file_path, is_running=lambda: self._is_running)
-            self.output_signal.emit(output)
-        self.finished_signal.emit()
-
-    def stop(self):
-        self._is_running = False
 
 class MainWindow(QMainWindow, Ui_Logfilter):
     def __init__(self, parent=None):
@@ -136,7 +40,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             base_path = Path(__file__).parent
 
         # Construct the full path to the icon
-        icon_path = base_path / 'AurobayLogo.png'
+        icon_path = base_path / 'resources' /'AurobayLogo.png'
 
         # Set the window icon
         self.setWindowIcon(QIcon(str(icon_path)))
@@ -589,37 +493,15 @@ class MainWindow(QMainWindow, Ui_Logfilter):
             self.label_status_value.setText("Mode set to Full Folder Error Check")
             self.label_status_value.setStyleSheet("color: blue;")
 
-def log_crash_to_file(exc_type, exc_value, exc_traceback):
-    """Logs the uncaught exception details to a file."""
-    with open(CRASH_LOG_FILE, "a") as crash_log:
-        crash_log.write("----- Crash Report -----\n")
-        crash_log.write(f"Exception Type: {exc_type.__name__}\n")
-        crash_log.write(f"Exception Message: {exc_value}\n")
-        crash_log.write("Traceback:\n")
-        traceback.print_tb(exc_traceback, file=crash_log)
-        crash_log.write("\n")
+# Main execution block
+def main():
+    # Set the global exception hook
+    sys.excepthook = handle_uncaught_exception
 
-def handle_uncaught_exception(exc_type, exc_value, exc_traceback):
-    """Handles uncaught exceptions and logs them."""
-    log_crash_to_file(exc_type, exc_value, exc_traceback)
-    
-    # Notify the user about the crash
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Critical)
-    msg.setWindowTitle("Application Crashed")
-    msg.setText("The application encountered an error and needs to close.")
-    msg.setInformativeText(f"A crash report has been saved to:\n{CRASH_LOG_FILE}")
-    msg.exec_()
-
-    # Call the default handler
-    sys.__excepthook__(exc_type, exc_value, exc_traceback)
-
-# Set the global exception hook
-sys.excepthook = handle_uncaught_exception
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-    
+
+if __name__ == "__main__":
+    main()

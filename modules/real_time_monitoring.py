@@ -3,8 +3,8 @@ import os
 import winsound
 
 from pathlib import Path
-from file_processing import read_file_contents, find_new_txt_files
-from ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
+from modules.file_processing import read_file_contents, find_new_txt_files
+from modules.ecu_processing import load_ecu_reference, count_ecus_in_modes, load_keywords_from_json, find_fail_keywords, find_recent_fueled_ignition_data
 
 
 json_file_path = os.path.abspath('reference_list.json')
