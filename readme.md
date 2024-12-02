@@ -1,4 +1,4 @@
-Logfilter 1.0.0
+Logfilter 1.0.1
 
 TODO:
     o/ CLR Screen when changing vehicle and /clr button. 
@@ -21,5 +21,5 @@ TODO:
     / logo not shown after compilation
     / Unify path handling with pathlib 22/11 2024
 
-Compile with this:
-pyinstaller --onefile --windowed --add-data "AurobayLogo.png;." main.py
+Compile with this command prompt:
+pyinstaller main.spec
