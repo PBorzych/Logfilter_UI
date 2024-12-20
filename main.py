@@ -17,7 +17,7 @@ from pathlib import Path
 from modules.ecu_processing import  load_keywords_from_json
 from datetime import datetime
 from functools import partial
-from custom_widgets import LogViewer
+from logviewer_window import LogViewer
 from threads import MonitoringThread, FullFolderCheckThread
 from exceptions_handler import handle_uncaught_exception
 from constants import CRASH_LOG_FILE, CRASH_LOG_DIRECTORY, KEYWORD_LIST_FILE, version
