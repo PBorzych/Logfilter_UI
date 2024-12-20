@@ -23,9 +23,10 @@ def check_file_pairs_and_duplicates(directory):
             duplicates.append(file_name)
         file_names.add(file_name)
 
-        # Remove any substring containing "confirm" or "pending" (case-insensitive) and combinations like "Pending&Confirm"
+        # Remove any substring containing "confirm" (which will catch both confirm and confirmed)
+        # or "pending" (case-insensitive)        
         lower_file_name = file_name.lower()
-        pair_name = re.sub(r'_?(pending[&]?confirm|confirm[&]?pending|pending|confirm)', '', lower_file_name)
+        pair_name = re.sub(r'_?(pending|confirm)[a-z]*', '', lower_file_name)
 
         # Remove any trailing underscores or special characters left after replacement
         pair_name = re.sub(r'[_&]+$', '', pair_name)
