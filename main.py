@@ -154,19 +154,6 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         directories_as_strings = [str(dir_path) for dir_path in self.recent_directories]
         self.settings.setValue("recent_directories", directories_as_strings)
 
-    # def load_recent_directories(self):
-    #     try:
-    #         with open('recent_directories.txt', 'r') as file:
-    #             directories = [line.strip() for line in file.readlines()]
-    #         return directories
-    #     except FileNotFoundError:
-    #         return []
-
-    # def save_recent_directories(self):
-    #     with open('recent_directories.txt', 'w') as file:
-    #         for directory in self.recent_directories:
-    #             file.write(f"{directory}\n")
-
     def update_recent_directories_menu(self):
         self.menuRecent_Directories.clear()
         for directory in self.recent_directories:
