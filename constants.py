@@ -1,6 +1,6 @@
 from pathlib import Path
 
-version = "1.0.1"
+version = "1.0.2"
 
 # Crash log directory and file
 CRASH_LOG_DIRECTORY = Path("CrashLogs")
