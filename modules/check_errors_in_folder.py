@@ -51,7 +51,7 @@ def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True)
     and ensures there is a corresponding "pending" logfile for every "confirmed" logfile and vice versa.
     """
     # Load ECU reference data and error keywords
-    keywords = load_keywords_from_json(json_file_path)
+    keywords, ignore_keywords = load_keywords_from_json(json_file_path)
     flattened_reference = load_ecu_reference(json_file_path)
 
     # Initialize the output string with CSS styles
@@ -99,7 +99,7 @@ def check_errors_in_folder(folder_path, json_file_path, is_running=lambda: True)
         ecu_counts, detailed_faults, warning = count_ecus_in_modes(file_content, flattened_reference)
 
         # Check for specific failures or keywords
-        fail_details = find_fail_keywords(file_content, keywords)
+        fail_details = find_fail_keywords(file_content, keywords, ignore_keywords)
 
         # Aggregate error information
         if warning or fail_details:

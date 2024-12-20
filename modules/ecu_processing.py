@@ -7,16 +7,23 @@ def load_keywords_from_json(json_file_path):
             data = json.load(json_file)
             if 'keywords' not in data:
                 raise KeyError("The key 'keywords' is missing from the JSON data.")
+            
             keywords = data['keywords']
-            return keywords
+            ignore_keywords = data.get('ignore_keywords', [])
+            return keywords, ignore_keywords
+        
     except FileNotFoundError:
         print(f"Error: The file '{json_file_path}' was not found.")
+        return [], []
     except json.JSONDecodeError:
         print(f"Error: The file '{json_file_path}' is not a valid JSON file.")
+        return [], []
     except KeyError as e:
         print(f"Error: {e}")
+        return [], []
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        return [], []
 
 def load_ecu_reference(json_file_path):
     try:
@@ -116,7 +123,7 @@ def count_ecus_in_modes(content, flattened_reference):
 #             return version
 #     return "Unknown version"
 
-def find_fail_keywords(file_content, keywords):
+def find_fail_keywords(file_content, keywords, ignore_keywords):
     sections = file_content.split("Scan-Tool Mode")
     fail_details = []
 
@@ -126,9 +133,18 @@ def find_fail_keywords(file_content, keywords):
         
         for line in lines:
             line_lower = line.lower()
-            if any (keyword in line_lower for keyword in keywords):
-                # Append a tuple containing the section index and the line
-                fail_details.append((f"Mode {index}", line.strip()))
+
+            should_ignore = False
+            for ignore_keyword in ignore_keywords:
+                if ignore_keyword.lower() in line_lower:
+                    should_ignore = True
+                    break
+            if not should_ignore:
+                for keyword in keywords:
+                    if keyword.lower() in line_lower:
+                        # Append a tuple containing the section index and the line
+                        fail_details.append((f"Mode {index}", line.strip()))
+                        break
 
     return fail_details
 
