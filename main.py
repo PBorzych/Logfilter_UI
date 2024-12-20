@@ -20,10 +20,11 @@ from functools import partial
 from custom_widgets import LogViewer
 from threads import MonitoringThread, FullFolderCheckThread
 from exceptions_handler import handle_uncaught_exception
-from constants import CRASH_LOG_FILE, CRASH_LOG_DIRECTORY, version
+from constants import CRASH_LOG_FILE, CRASH_LOG_DIRECTORY, KEYWORD_LIST_FILE, version
+from modules.keywords_editor import KeywordsEditorDialog
 
 # Load keywords globally
-json_file_path = Path('reference_list.json').resolve()
+json_file_path = Path(KEYWORD_LIST_FILE).resolve()
 keywords = load_keywords_from_json(json_file_path)
 
 class MainWindow(QMainWindow, Ui_Logfilter):
@@ -81,6 +82,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         self.actionLoad_Log.triggered.connect(self.load_log)
         self.actionSharepoint_Check_N_A.triggered.connect(self.sharepoint_check)
         self.actionAbout.triggered.connect(self.about)
+        self.actionEdit_Keywords.triggered.connect(self.show_keywords_editor)
 
         # Connect the comboBox currentIndexChanged signal to the method
         self.comboBox_directory.currentIndexChanged.connect(self.combo_box_selection_changed)
@@ -151,19 +153,6 @@ class MainWindow(QMainWindow, Ui_Logfilter):
         # Convert Path objects to strings before saving
         directories_as_strings = [str(dir_path) for dir_path in self.recent_directories]
         self.settings.setValue("recent_directories", directories_as_strings)
-
-    # def load_recent_directories(self):
-    #     try:
-    #         with open('recent_directories.txt', 'r') as file:
-    #             directories = [line.strip() for line in file.readlines()]
-    #         return directories
-    #     except FileNotFoundError:
-    #         return []
-
-    # def save_recent_directories(self):
-    #     with open('recent_directories.txt', 'w') as file:
-    #         for directory in self.recent_directories:
-    #             file.write(f"{directory}\n")
 
     def update_recent_directories_menu(self):
         self.menuRecent_Directories.clear()
@@ -465,6 +454,16 @@ class MainWindow(QMainWindow, Ui_Logfilter):
     def sharepoint_check(self):
         # Implement your sharepoint_check method here
         QMessageBox.information(self, "Info", "Sharepoint Check is not available (N/A).")
+
+    def show_keywords_editor(self):
+        """Opens the keywords editor dialog"""
+        dialog = KeywordsEditorDialog(self)
+        if dialog.exec_():
+            # Reload keywords after editing
+            global keywords
+            keywords = load_keywords_from_json(json_file_path)
+            self.label_status_value.setText("Keywords updated")
+            self.label_status_value.setStyleSheet("color: green;")
 
     def about(self):
         QMessageBox.about(
