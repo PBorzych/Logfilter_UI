@@ -158,6 +158,9 @@ class Ui_Logfilter(object):
         self.actionSharepoint_Check_N_A = QtWidgets.QAction(Logfilter)
         self.actionSharepoint_Check_N_A.setObjectName("actionSharepoint_Check_N_A")
 
+        self.actionEdit_Keywords = QtWidgets.QAction(Logfilter)
+        self.actionEdit_Keywords.setObjectName("actionEdit_Keywords")
+
         self.actionAbout = QtWidgets.QAction(Logfilter)
         self.actionAbout.setObjectName("actionAbout")
 
@@ -169,6 +172,7 @@ class Ui_Logfilter(object):
         self.menuFile.addAction(self.actionExit)
 
         self.menuSettings.addAction(self.actionSharepoint_Check_N_A)
+        self.menuSettings.addAction(self.actionEdit_Keywords)
         self.menuHelp.addAction(self.actionAbout)
 
         self.menubar.addAction(self.menuFile.menuAction())
@@ -204,6 +208,7 @@ class Ui_Logfilter(object):
         self.menuRecent_Directories.setTitle(_translate("Logfilter", "Recent Directories"))
         self.actionExit.setText(_translate("Logfilter", "Exit"))
         self.actionSharepoint_Check_N_A.setText(_translate("Logfilter", "Sharepoint Check (N/A)"))
+        self.actionEdit_Keywords.setText(_translate("Logfilter", "Edit Keywords"))
         self.actionAbout.setText(_translate("Logfilter", "About"))
 
 
