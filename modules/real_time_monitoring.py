@@ -9,7 +9,7 @@ from modules.ecu_processing import load_ecu_reference, count_ecus_in_modes, load
 
 json_file_path = os.path.abspath('reference_list.json')
 #csv_file_path = r'fail_keywords.csv'
-keywords = load_keywords_from_json(json_file_path)
+keywords, ignore_keywords = load_keywords_from_json(json_file_path)
 #flattened_reference = load_ecu_reference(json_file_path)
 
 def beep_sound(duration=1000, frequency=440):
@@ -18,7 +18,7 @@ def beep_sound(duration=1000, frequency=440):
 
 def handle_failures(file_content):
     """Handles and reports failures detected in the log content."""
-    fail_details = find_fail_keywords(file_content, keywords)
+    fail_details = find_fail_keywords(file_content, keywords, ignore_keywords)
     if fail_details:
         return f"<span style='color:red;'>Fail details found: {fail_details}</span><br>"
     return ""

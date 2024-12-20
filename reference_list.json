@@ -4,6 +4,9 @@
     "no response",
     "error"
   ],
+  "ignore_keywords": [
+    "EGR error"
+  ],
   "CH/US MP/HP version": [
     "D2  SGCM-Start/GenCtrl",
     "30  CHCM-ChassisCtrl",
