@@ -218,6 +218,7 @@ class MainWindow(QMainWindow, Ui_Logfilter):
 
         # Update the window title
         self.update_window_title()
+        self.clear_log()
 
     def browse_directory(self):
         current_directory = Path(self.current_directory)
