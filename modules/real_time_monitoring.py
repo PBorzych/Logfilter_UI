@@ -79,7 +79,7 @@ def display_ecu_counts(ecu_counts):
 #             print("Confirmed")
 #             return  
         
-def compare_status_with_logfile(logfile_name, detailed_faults):
+def compare_status_with_logfile(logfile_name, detailed_faults, mode_3_cycles, mode_7_cycles):
     """Compares the status derived from error codes with the status in the logfile name and returns the result as a string."""
     output = ""
     # Extract status from the logfile name
@@ -113,12 +113,23 @@ def compare_status_with_logfile(logfile_name, detailed_faults):
         if code not in mode_3_codes:
             determined_status = "pending"
             break
-
+    
     # Compare statuses
     if logfile_status == determined_status:
         output += f"<br>Status matches: {logfile_status.capitalize()}<br>"
     else:
         output += f"<span style='color:red;'>Status mismatch! Logfile: {logfile_status.capitalize()}, Determined: {determined_status.capitalize()}</span><br>"
+
+    # Compare ignition cycle counters
+    if mode_3_cycles is not None and mode_7_cycles is not None:
+        expected_mode_7_cycles = mode_3_cycles + 1
+        if mode_7_cycles == expected_mode_7_cycles:
+            output += f"Ignition cycle counter check passed: Mode 3 ({mode_3_cycles}) + 1 = Mode 7 ({mode_7_cycles})<br>"
+        else:
+            output += f"<span style='color:red;'>Ignition cycle counter mismatch! Mode 3 ({mode_3_cycles}) + 1 ≠ Mode 7 ({mode_7_cycles})</span><br>"
+    else:
+        output += "<span style='color:red;'>Unable to compare ignition cycle counters - missing data</span><br>"
+
     return output
         
 def process_file(file, json_file_path):
@@ -131,6 +142,9 @@ def process_file(file, json_file_path):
     # Load reference data for ECU identifiers from the JSON file.
     flattened_reference = load_ecu_reference(json_file_path)
     ecu_counts, detailed_faults, warning = count_ecus_in_modes(file_content, flattened_reference)
+
+    mode_3_cycles = compare_status_with_logfile(file.name, mode_3_cycles)
+    mode_7_cycles = compare_status_with_logfile(file.name, mode_7_cycles)
     
     # Reporting the processing of the new file
     outputs.append(f"<b>Processing new file:</b> {file.name}<br>")
