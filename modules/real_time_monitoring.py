@@ -162,7 +162,7 @@ def process_file(file, json_file_path):
     # Retrieving and displaying data for fueled ignition cycles.
     fueled_ignition_cycle_counter = find_recent_fueled_ignition_data(file_content)
     if fueled_ignition_cycle_counter:
-        outputs.append(f"<br>{fueled_ignition_cycle_counter}<br>")
+        outputs.append(f"<br>Ignition Cycle Counter: {fueled_ignition_cycle_counter}<br>")
     
     return ''.join(outputs)
 

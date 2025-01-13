@@ -152,7 +152,7 @@ def find_recent_fueled_ignition_data(log_content):
     # Identifying the start of the relevant section for "INFOTYPE 08"
     start_phase = "INFOTYPE 08\tIn-use Performance Tracking for Spark Ignition Engines"
     start_index = log_content.find(start_phase)
-    
+
     if start_index == -1:
         return None  # Indicate that the section was not found
 
@@ -163,7 +163,11 @@ def find_recent_fueled_ignition_data(log_content):
     lines = relevant_content.split('\n')
     for line in lines:
         if 'Ignition Cycle Counter' in line:
-            return line.strip()  # Return the entire line
+            # Extract the number using split
+            parts = line.split()
+            for i, part in enumerate(parts):
+                if part.isdigit():
+                    return int(part)  # Return just the number as an integer
 
     return None
 
