@@ -163,7 +163,11 @@ def find_recent_fueled_ignition_data(log_content):
     lines = relevant_content.split('\n')
     for line in lines:
         if 'Ignition Cycle Counter' in line:
-            return line.strip()  # Return the entire line
+            # Extract the number using split
+            parts = line.split()
+            for i, part in enumerate(parts):
+                if part.isdigit():
+                    return int(part)  # Return just the number as an integer
 
     return None
 
