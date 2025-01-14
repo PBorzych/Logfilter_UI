@@ -120,15 +120,15 @@ def compare_status_with_logfile(logfile_name, detailed_faults, mode_3_cycles, mo
     else:
         output += f"<span style='color:red;'>Status mismatch! Logfile: {logfile_status.capitalize()}, Determined: {determined_status.capitalize()}</span><br>"
 
-    # Compare ignition cycle counters
-    if mode_3_cycles is not None and mode_7_cycles is not None:
-        expected_mode_7_cycles = mode_3_cycles + 1
-        if mode_7_cycles == expected_mode_7_cycles:
-            output += f"Ignition cycle counter check passed: Mode 3 ({mode_3_cycles}) + 1 = Mode 7 ({mode_7_cycles})<br>"
-        else:
-            output += f"<span style='color:red;'>Ignition cycle counter mismatch! Mode 3 ({mode_3_cycles}) + 1 ≠ Mode 7 ({mode_7_cycles})</span><br>"
-    else:
-        output += "<span style='color:red;'>Unable to compare ignition cycle counters - missing data</span><br>"
+    # # Compare ignition cycle counters
+    # if mode_3_cycles is not None and mode_7_cycles is not None:
+    #     expected_mode_7_cycles = mode_3_cycles + 1
+    #     if mode_7_cycles == expected_mode_7_cycles:
+    #         output += f"Ignition cycle counter check passed: Mode 3 ({mode_3_cycles}) + 1 = Mode 7 ({mode_7_cycles})<br>"
+    #     else:
+    #         output += f"<span style='color:red;'>Ignition cycle counter mismatch! Mode 3 ({mode_3_cycles}) + 1 ≠ Mode 7 ({mode_7_cycles})</span><br>"
+    # else:
+    #     output += "<span style='color:red;'>Unable to compare ignition cycle counters - missing data</span><br>"
 
     return output
         
@@ -143,8 +143,20 @@ def process_file(file, json_file_path):
     flattened_reference = load_ecu_reference(json_file_path)
     ecu_counts, detailed_faults, warning = count_ecus_in_modes(file_content, flattened_reference)
 
-    mode_3_cycles = compare_status_with_logfile(file.name, mode_3_cycles)
-    mode_7_cycles = compare_status_with_logfile(file.name, mode_7_cycles)
+   # Create variables to store the ignition cycle counters for modes 3 and 7
+    mode_3_cycles = None
+    mode_7_cycles = None
+ 
+    # Compare ignition cycle counters
+    mode_3_cycles = find_recent_fueled_ignition_data(file_content)
+    mode_7_cycles = find_recent_fueled_ignition_data(file_content)
+    if mode_3_cycles is not None and mode_7_cycles is not None:
+        if mode_3_cycles == mode_7_cycles:
+            outputs.append(f"<span style='color:red;'>Ignition cycle counter error! Mode 3 ({mode_3_cycles}) equals Mode 7 ({mode_7_cycles})</span><br>")
+        elif mode_7_cycles == mode_3_cycles + 1:
+                outputs.append(f"Ignition cycle counter check passed: Mode 3 ({mode_3_cycles}) + 1 = Mode 7 ({mode_7_cycles})<br>")
+        else:
+            outputs.append(f"<span style='color:red;'>Ignition cycle counter mismatch! Mode 3 ({mode_3_cycles}) + 1 != Mode 7 ({mode_7_cycles})</span><br>")
     
     # Reporting the processing of the new file
     outputs.append(f"<b>Processing new file:</b> {file.name}<br>")
